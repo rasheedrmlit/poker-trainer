@@ -308,3 +308,111 @@ export function getHandGrid() {
 
   return { grid, ranks };
 }
+
+/**
+ * Deep-stack playability bonuses.
+ * These represent how much MORE playable a hand becomes at 200-300bb deep,
+ * expressed as a percentile boost. Speculative hands get the biggest bumps.
+ */
+const DEEP_STACK_BONUS = {
+  // Small pairs — set mining is hugely +EV deep
+  '22': 25, '33': 22, '44': 20, '55': 18, '66': 15, '77': 10, '88': 5,
+  // Suited connectors — straights/flushes pay off massively
+  '32s': 28, '43s': 26, '54s': 24, '65s': 22, '76s': 20, '87s': 18,
+  '98s': 15, 'T9s': 12, 'JTs': 8,
+  // Suited gappers
+  '42s': 22, '53s': 22, '63s': 20, '64s': 20, '74s': 18, '75s': 18,
+  '85s': 16, '86s': 16, '96s': 14, '97s': 14, 'T7s': 12, 'T8s': 10,
+  'J7s': 10, 'J8s': 10, 'J9s': 8, 'Q8s': 8, 'Q9s': 6,
+  // Suited aces — nut flush draw potential
+  'A2s': 15, 'A3s': 14, 'A4s': 12, 'A5s': 10, 'A6s': 12, 'A7s': 10,
+  'A8s': 8, 'A9s': 6,
+  // Suited kings
+  'K2s': 12, 'K3s': 11, 'K4s': 10, 'K5s': 10, 'K6s': 8, 'K7s': 8, 'K8s': 6,
+  // Offsuit connectors get a small bump
+  '87o': 8, '76o': 8, '65o': 8, '98o': 6, 'T9o': 5,
+  'J9o': 4, 'JTo': 3, 'T8o': 4,
+  // Offsuit gappers — marginal bump
+  '97o': 4, '86o': 4, '75o': 4, '64o': 4,
+};
+
+/**
+ * Get deep-stack adjusted strength for a starting hand.
+ * Returns the same shape as getPreflopStrength but with boosted tiers
+ * for hands that gain implied odds value at 200-300bb.
+ */
+export function getDeepStackStrength(card1, card2) {
+  const base = getPreflopStrength(card1, card2);
+  if (!base) return null;
+
+  const bonus = DEEP_STACK_BONUS[base.key] || 0;
+  const deepPct = Math.min(100, base.percentile + bonus);
+
+  let tier, tierLabel, tierColor, description;
+
+  if (deepPct >= 95) {
+    tier = 'premium'; tierLabel = 'Premium'; tierColor = '#facc15';
+    description = 'Elite hand at any depth. Raise or re-raise aggressively.';
+  } else if (deepPct >= 85) {
+    tier = 'strong'; tierLabel = 'Strong'; tierColor = '#22c55e';
+    description = 'Very strong deep. The implied odds make this hand a money-maker.';
+  } else if (deepPct >= 70) {
+    tier = 'good'; tierLabel = 'Good'; tierColor = '#3b82f6';
+    description = 'Plays well deep thanks to implied odds. Great from middle and late position.';
+  } else if (deepPct >= 50) {
+    tier = 'playable'; tierLabel = 'Playable'; tierColor = '#a78bfa';
+    description = 'Worth playing deep, especially in position. The extra stack depth gives you room to maneuver.';
+  } else if (deepPct >= 30) {
+    tier = 'marginal'; tierLabel = 'Marginal'; tierColor = '#f97316';
+    description = 'Borderline even deep. Only play from the button or in the big blind facing a small raise.';
+  } else {
+    tier = 'trash'; tierLabel = 'Fold'; tierColor = '#ef4444';
+    description = 'Still not playable even with deep stacks. Fold and wait for a better spot.';
+  }
+
+  return {
+    ...base,
+    percentile: deepPct,
+    deepBonus: bonus,
+    tier, tierLabel, tierColor, description,
+  };
+}
+
+/**
+ * Deep-stack version of the hand grid.
+ */
+export function getDeepHandGrid() {
+  const ranks = RANK_ORDER;
+  const grid = [];
+
+  for (let r = 0; r < 13; r++) {
+    const row = [];
+    for (let c = 0; c < 13; c++) {
+      let key;
+      if (r === c) key = `${ranks[r]}${ranks[c]}`;
+      else if (c > r) key = `${ranks[r]}${ranks[c]}s`;
+      else key = `${ranks[c]}${ranks[r]}o`;
+
+      const data = getDeepStackStrength(
+        { rank: ranks[r], suit: 'h' },
+        { rank: ranks[c], suit: c > r ? 'h' : 'd' }
+      );
+
+      row.push({
+        key,
+        percentile: data?.percentile || 5,
+        winEquity: data?.winEquity || 32,
+        deepBonus: data?.deepBonus || 0,
+        tier: data?.tier || 'trash',
+        tierLabel: data?.tierLabel || 'Fold',
+        tierColor: data?.tierColor || '#ef4444',
+        suited: c > r,
+        offsuit: c < r,
+        pair: r === c,
+      });
+    }
+    grid.push(row);
+  }
+
+  return { grid, ranks };
+}

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getHandGrid, getPreflopStrength } from '../utils/preflopStrength';
+import { getHandGrid, getDeepHandGrid, getPreflopStrength, getDeepStackStrength } from '../utils/preflopStrength';
 
 const TIER_INFO = [
   { tier: 'premium', label: 'Premium', color: '#facc15', range: '95–100%', plainEnglish: 'The absolute best starting hands. Always raise or re-raise before the flop.' },
@@ -13,7 +13,10 @@ const TIER_INFO = [
 
 export default function HandChart() {
   const navigate = useNavigate();
-  const { grid, ranks } = getHandGrid();
+  const [mode, setMode] = useState('standard'); // 'standard' or 'deep'
+  const standardData = getHandGrid();
+  const deepData = getDeepHandGrid();
+  const { grid, ranks } = mode === 'deep' ? deepData : standardData;
   const [selected, setSelected] = useState(null);
   const [filterTier, setFilterTier] = useState(null);
 
@@ -38,6 +41,39 @@ export default function HandChart() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 py-3">
+        {/* Mode Toggle */}
+        <div className="flex gap-2 mb-3 px-1">
+          <button
+            onClick={() => { setMode('standard'); setSelected(null); setFilterTier(null); }}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
+              mode === 'standard'
+                ? 'bg-blue-600 text-white ring-2 ring-blue-400/50'
+                : 'bg-gray-800 text-gray-400 border border-gray-700'
+            }`}
+          >
+            Standard (100 BB)
+          </button>
+          <button
+            onClick={() => { setMode('deep'); setSelected(null); setFilterTier(null); }}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
+              mode === 'deep'
+                ? 'bg-red-600 text-white ring-2 ring-red-400/50'
+                : 'bg-gray-800 text-gray-400 border border-gray-700'
+            }`}
+          >
+            Deep Stack (200-300 BB)
+          </button>
+        </div>
+
+        {mode === 'deep' && (
+          <div className="mx-1 mb-3 bg-red-950/30 border border-red-800/30 rounded-xl px-3 py-2">
+            <p className="text-[11px] text-red-200 leading-relaxed">
+              Deep stacks boost speculative hands (small pairs, suited connectors) because you can win huge pots when you hit.
+              Hands with a <span className="text-red-400 font-bold">↑</span> gained playability compared to standard depth.
+            </p>
+          </div>
+        )}
+
         {/* Legend */}
         <div className="flex flex-wrap gap-1.5 mb-3 px-1">
           {TIER_INFO.map(t => (
@@ -105,6 +141,7 @@ export default function HandChart() {
                         </div>
                         <div className="text-[6px] opacity-70" style={{ color: dimmed ? '#333' : cell.tierColor }}>
                           {cell.suited ? 's' : cell.offsuit ? 'o' : ''}
+                          {mode === 'deep' && cell.deepBonus > 0 && <span style={{ color: '#ef4444' }}> ↑</span>}
                         </div>
                       </td>
                     );
@@ -153,14 +190,20 @@ export default function HandChart() {
 
             <div className="px-4 py-3 border-t" style={{ borderColor: selected.tierColor + '20' }}>
               {(() => {
-                const info = getPreflopStrength(
+                const strengthFn = mode === 'deep' ? getDeepStackStrength : getPreflopStrength;
+                const info = strengthFn(
                   { rank: selected.key[0], suit: 'h' },
                   { rank: selected.key[1], suit: selected.suited ? 'h' : 'd' }
                 );
                 return (
                   <>
                     <p className="text-sm text-gray-200 leading-relaxed">{info?.description}</p>
-                    {renderPositionAdvice(selected)}
+                    {mode === 'deep' && info?.deepBonus > 0 && (
+                      <p className="text-xs text-red-300 mt-1.5">
+                        ↑ Deep-stack bonus: +{info.deepBonus} playability points. Implied odds make this hand much more profitable at 200-300 BB.
+                      </p>
+                    )}
+                    {renderPositionAdvice(selected, mode)}
                   </>
                 );
               })()}
@@ -209,14 +252,16 @@ export default function HandChart() {
 }
 
 /** Position-specific advice for the selected hand */
-function renderPositionAdvice(cell) {
+function renderPositionAdvice(cell, mode = 'standard') {
   const pct = cell.percentile;
+  const isDeep = mode === 'deep';
   let positions = [];
 
   if (pct >= 95) {
     positions = [
       { pos: 'Any Position', action: 'Raise', color: '#22c55e' },
       { pos: 'Facing a Raise', action: 'Re-raise', color: '#facc15' },
+      ...(isDeep ? [{ pos: 'BB vs Raise', action: 'Re-raise for value', color: '#facc15' }] : []),
     ];
   } else if (pct >= 85) {
     positions = [
@@ -224,23 +269,31 @@ function renderPositionAdvice(cell) {
       { pos: 'Middle Seat', action: 'Raise', color: '#22c55e' },
       { pos: 'Late Seat', action: 'Raise', color: '#22c55e' },
       { pos: 'Facing a Raise', action: 'Call or Re-raise', color: '#facc15' },
+      ...(isDeep ? [{ pos: 'BB vs Raise', action: 'Call (set mine)', color: '#22c55e' }] : []),
     ];
   } else if (pct >= 70) {
     positions = [
-      { pos: 'Early Seat', action: 'Fold or Raise', color: '#f97316' },
+      { pos: 'Early Seat', action: isDeep ? 'Call (set mine)' : 'Fold or Raise', color: isDeep ? '#3b82f6' : '#f97316' },
       { pos: 'Middle Seat', action: 'Raise', color: '#22c55e' },
       { pos: 'Late Seat', action: 'Raise', color: '#22c55e' },
       { pos: 'Facing a Raise', action: 'Call', color: '#3b82f6' },
+      ...(isDeep ? [{ pos: 'BB vs Raise', action: 'Call — great implied odds', color: '#22c55e' }] : []),
     ];
   } else if (pct >= 50) {
     positions = [
       { pos: 'Early Seat', action: 'Fold', color: '#ef4444' },
-      { pos: 'Middle Seat', action: 'Fold or Call', color: '#f97316' },
+      { pos: 'Middle Seat', action: isDeep ? 'Call if cheap' : 'Fold or Call', color: isDeep ? '#a78bfa' : '#f97316' },
       { pos: 'Late Seat', action: 'Raise', color: '#22c55e' },
-      { pos: 'Facing a Raise', action: 'Usually Fold', color: '#ef4444' },
+      { pos: 'Facing a Raise', action: isDeep ? 'Call if small raise' : 'Usually Fold', color: isDeep ? '#a78bfa' : '#ef4444' },
+      ...(isDeep ? [{ pos: 'BB vs Raise', action: 'Call — implied odds', color: '#3b82f6' }] : []),
     ];
   } else if (pct >= 30) {
-    positions = [
+    positions = isDeep ? [
+      { pos: 'Early Seat', action: 'Fold', color: '#ef4444' },
+      { pos: 'Late Seat', action: 'Raise if unopened', color: '#f97316' },
+      { pos: 'BB vs Small Raise', action: 'Call — cheap shot', color: '#a78bfa' },
+      { pos: 'Facing a Raise', action: 'Fold', color: '#ef4444' },
+    ] : [
       { pos: 'Early Seat', action: 'Fold', color: '#ef4444' },
       { pos: 'Middle Seat', action: 'Fold', color: '#ef4444' },
       { pos: 'Late Seat', action: 'Raise if no action', color: '#f97316' },
