@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import QRCode from '../components/QRCode';
 
 const API = import.meta.env.PROD ? '' : 'http://localhost:3000';
 
@@ -21,6 +22,8 @@ export default function Home({ playerName, setPlayerName }) {
   const [buyIn, setBuyIn] = useState(200);
   const [shareLink, setShareLink] = useState('');
   const [copied, setCopied] = useState(false);
+  const [showMobileShare, setShowMobileShare] = useState(false);
+  const [mobileCopied, setMobileCopied] = useState(false);
 
   const selectedBuyIn = BUY_IN_OPTIONS.find(b => b.value === buyIn) || BUY_IN_OPTIONS[2];
 
@@ -100,6 +103,30 @@ export default function Home({ playerName, setPlayerName }) {
   const goToTable = () => {
     const tableId = shareLink.split('/table/')[1];
     if (tableId) navigate(`/table/${tableId}`);
+  };
+
+  const MOBILE_URL = 'https://poker-trainer-m544.onrender.com';
+
+  const copyMobileLink = () => {
+    navigator.clipboard?.writeText(MOBILE_URL);
+    setMobileCopied(true);
+    setTimeout(() => setMobileCopied(false), 2000);
+  };
+
+  const shareMobileLink = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Poker Trainer',
+          text: 'Play No-Limit Hold\'em with AI coaching!',
+          url: MOBILE_URL,
+        });
+      } catch (e) {
+        // user cancelled share
+      }
+    } else {
+      copyMobileLink();
+    }
   };
 
   const joinMultiplayer = () => {
@@ -259,6 +286,52 @@ export default function Home({ playerName, setPlayerName }) {
         >
           <span className="text-gold">📖</span> Strategy Guide — Learn Poker from Scratch
         </button>
+      </div>
+
+      {/* Play on Mobile */}
+      <div className="w-full max-w-sm mt-3">
+        <button
+          onClick={() => setShowMobileShare(!showMobileShare)}
+          className="w-full bg-gray-800/50 border border-gray-700 text-gray-300 font-semibold py-3 px-6 rounded-xl text-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+        >
+          <span className="text-gold">📱</span> Play on Mobile — QR Code &amp; Link
+        </button>
+
+        {showMobileShare && (
+          <div className="mt-2 bg-gray-800 border border-gray-700 rounded-xl p-4 animate-slide-up">
+            <p className="text-xs text-gray-400 text-center mb-3">
+              Scan this QR code with your phone or share the link
+            </p>
+
+            {/* QR Code */}
+            <div className="flex justify-center mb-3">
+              <QRCode value={MOBILE_URL} size={160} />
+            </div>
+
+            {/* URL display */}
+            <div className="bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 mb-3">
+              <p className="text-xs text-gray-300 font-mono text-center truncate">{MOBILE_URL}</p>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex gap-2">
+              <button
+                onClick={copyMobileLink}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-colors ${
+                  mobileCopied ? 'bg-green-600 text-white' : 'bg-gold text-black'
+                }`}
+              >
+                {mobileCopied ? 'Copied!' : 'Copy Link'}
+              </button>
+              <button
+                onClick={shareMobileLink}
+                className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl text-sm font-bold active:scale-[0.98] transition-transform"
+              >
+                Share
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Footer */}
