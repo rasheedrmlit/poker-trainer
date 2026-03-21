@@ -4,13 +4,19 @@ import QRCode from '../components/QRCode';
 
 const API = import.meta.env.PROD ? '' : 'http://localhost:3000';
 
-const BUY_IN_OPTIONS = [
-  { label: '$50', value: 50, blinds: '0.25/0.50' },
-  { label: '$100', value: 100, blinds: '0.50/1' },
-  { label: '$200', value: 200, blinds: '1/2' },
-  { label: '$500', value: 500, blinds: '2.50/5' },
-  { label: '$1,000', value: 1000, blinds: '5/10' },
-  { label: '$5,000', value: 5000, blinds: '25/50' },
+const STACK_TYPES = [
+  { label: 'Short', desc: '50 BB', multiplier: 50, color: 'text-orange-400' },
+  { label: 'Standard', desc: '100 BB', multiplier: 100, color: 'text-blue-400' },
+  { label: 'Deep', desc: '200 BB', multiplier: 200, color: 'text-purple-400' },
+  { label: 'Ultra Deep', desc: '300 BB', multiplier: 300, color: 'text-red-400' },
+];
+
+const BLIND_LEVELS = [
+  { label: '$0.50/$1', sb: 0.5, bb: 1 },
+  { label: '$1/$2', sb: 1, bb: 2 },
+  { label: '$2.50/$5', sb: 2.5, bb: 5 },
+  { label: '$5/$10', sb: 5, bb: 10 },
+  { label: '$25/$50', sb: 25, bb: 50 },
 ];
 
 export default function Home({ playerName, setPlayerName }) {
@@ -19,13 +25,18 @@ export default function Home({ playerName, setPlayerName }) {
   const [loading, setLoading] = useState(false);
   const [joinCode, setJoinCode] = useState('');
   const [showJoin, setShowJoin] = useState(false);
-  const [buyIn, setBuyIn] = useState(200);
+  const [stackType, setStackType] = useState(1);
+  const [blindLevel, setBlindLevel] = useState(1);
+  const [customBuyIn, setCustomBuyIn] = useState('');
   const [shareLink, setShareLink] = useState('');
   const [copied, setCopied] = useState(false);
   const [showMobileShare, setShowMobileShare] = useState(false);
   const [mobileCopied, setMobileCopied] = useState(false);
 
-  const selectedBuyIn = BUY_IN_OPTIONS.find(b => b.value === buyIn) || BUY_IN_OPTIONS[2];
+  const selectedStack = STACK_TYPES[stackType];
+  const selectedBlinds = BLIND_LEVELS[blindLevel];
+  const buyIn = customBuyIn ? parseInt(customBuyIn) : selectedStack.multiplier * selectedBlinds.bb;
+  const effectiveBB = Math.round(buyIn / selectedBlinds.bb);
 
   const saveName = () => {
     const n = name.trim() || 'Player';
@@ -35,9 +46,11 @@ export default function Home({ playerName, setPlayerName }) {
   };
 
   const getConfig = () => {
-    const opt = BUY_IN_OPTIONS.find(b => b.value === buyIn) || BUY_IN_OPTIONS[2];
-    const [sb, bb] = opt.blinds.split('/').map(Number);
-    return { startingStack: buyIn, smallBlind: sb, bigBlind: bb };
+    return {
+      startingStack: buyIn,
+      smallBlind: selectedBlinds.sb,
+      bigBlind: selectedBlinds.bb
+    };
   };
 
   const startQuickPlay = async (aiCount = 3) => {
@@ -163,26 +176,81 @@ export default function Home({ playerName, setPlayerName }) {
         />
       </div>
 
-      {/* Buy-in Selector */}
-      <div className="w-full max-w-sm mb-5">
-        <div className="text-xs text-gray-500 uppercase tracking-wide mb-2 text-center">Starting Buy-In</div>
-        <div className="grid grid-cols-3 gap-2">
-          {BUY_IN_OPTIONS.map(opt => (
+      {/* Stack Depth Selector */}
+      <div className="w-full max-w-sm mb-3">
+        <div className="text-xs text-gray-500 uppercase tracking-wide mb-2 text-center">Stack Depth</div>
+        <div className="grid grid-cols-4 gap-1.5">
+          {STACK_TYPES.map((s, i) => (
             <button
-              key={opt.value}
-              onClick={() => setBuyIn(opt.value)}
-              className={`py-2 px-3 rounded-lg text-center transition-all ${
-                buyIn === opt.value
+              key={i}
+              onClick={() => setStackType(i)}
+              className={`py-2 px-2 rounded-lg text-center transition-all ${
+                stackType === i
                   ? 'bg-gold text-black font-bold ring-2 ring-gold/50'
                   : 'bg-gray-800 text-gray-300 border border-gray-700'
               }`}
             >
-              <div className="text-sm font-bold">{opt.label}</div>
-              <div className={`text-[10px] ${buyIn === opt.value ? 'text-black/60' : 'text-gray-500'}`}>
-                {opt.blinds} blinds
+              <div className="text-xs font-bold">{s.label}</div>
+              <div className={`text-[10px] ${stackType === i ? 'text-black/60' : s.color}`}>
+                {s.desc}
               </div>
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Blind Level Selector */}
+      <div className="w-full max-w-sm mb-3">
+        <div className="text-xs text-gray-500 uppercase tracking-wide mb-2 text-center">Blinds</div>
+        <div className="grid grid-cols-5 gap-1.5">
+          {BLIND_LEVELS.map((b, i) => (
+            <button
+              key={i}
+              onClick={() => setBlindLevel(i)}
+              className={`py-2 px-1 rounded-lg text-center transition-all ${
+                blindLevel === i
+                  ? 'bg-gold text-black font-bold ring-2 ring-gold/50'
+                  : 'bg-gray-800 text-gray-300 border border-gray-700'
+              }`}
+            >
+              <div className="text-[10px] font-bold">{b.label}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Custom Buy-in */}
+      <div className="w-full max-w-sm mb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500 shrink-0">Or custom $:</span>
+          <input
+            type="number"
+            value={customBuyIn}
+            onChange={(e) => setCustomBuyIn(e.target.value)}
+            placeholder={`${selectedStack.multiplier * selectedBlinds.bb}`}
+            className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-gold/50"
+            min={selectedBlinds.bb * 10}
+          />
+          {customBuyIn && (
+            <button
+              onClick={() => setCustomBuyIn('')}
+              className="text-xs text-gray-500 active:text-white"
+            >
+              Reset
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Buy-in Summary */}
+      <div className="w-full max-w-sm mb-4 text-center">
+        <div className="text-xs text-gray-500">
+          Buy-in: <span className="text-white font-bold">${buyIn.toLocaleString()}</span>
+          <span className="text-gray-600 mx-1">•</span>
+          <span className={effectiveBB >= 200 ? 'text-red-400' : effectiveBB >= 150 ? 'text-purple-400' : effectiveBB >= 80 ? 'text-blue-400' : 'text-orange-400'}>{effectiveBB} BB</span>
+          <span className="text-gray-600 mx-1">•</span>
+          {selectedBlinds.label} blinds
+          {effectiveBB >= 150 && <span className="text-purple-400 ml-1">(Deep)</span>}
         </div>
       </div>
 

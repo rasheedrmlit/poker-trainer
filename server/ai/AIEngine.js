@@ -1,4 +1,4 @@
-const { OPENING_RANGES, THREE_BET_RANGES, getHandNotation, isHandInRange } = require('../gto/ranges');
+const { OPENING_RANGES, THREE_BET_RANGES, getHandNotation, isHandInRange, getBBDefenseFreq } = require('../gto/ranges');
 const { getHandStrength } = require('../../shared/evaluator');
 const { ACTIONS, GAME_STATES, RANK_VALUES } = require('../../shared/constants');
 
@@ -189,7 +189,14 @@ class AIEngine {
     // Map full ring positions to closest defined range
     const rangeMap = { 'UTG+1': 'UTG', 'UTG+2': 'UTG', 'MP+1': 'MP', 'HJ': 'CO' };
     const range = OPENING_RANGES[position] || OPENING_RANGES[rangeMap[position]] || OPENING_RANGES['MP'];
-    const handFreq = (range[notation] || 0) - this.profile.tightness;
+
+    // Use depth-adjusted frequencies for BB defense
+    const bb = gameState.config?.bigBlind || 2;
+    const effectiveBB = Math.round((player.stack + (player.bet || 0)) / bb);
+    const baseFreq = (position === 'BB')
+      ? getBBDefenseFreq(notation, effectiveBB)
+      : (range[notation] || 0);
+    const handFreq = baseFreq - this.profile.tightness;
 
     const hasRaise = gameState.actionHistory?.some(a =>
       a.street === GAME_STATES.PREFLOP && (a.type === ACTIONS.RAISE || a.type === ACTIONS.ALL_IN)

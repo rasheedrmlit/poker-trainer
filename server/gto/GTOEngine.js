@@ -1,4 +1,4 @@
-const { OPENING_RANGES, THREE_BET_RANGES, getHandNotation, isHandInRange } = require('./ranges');
+const { OPENING_RANGES, THREE_BET_RANGES, getHandNotation, isHandInRange, getBBDefenseFreq } = require('./ranges');
 const { getHandStrength } = require('../../shared/evaluator');
 const { RANK_VALUES, GAME_STATES, ACTIONS } = require('../../shared/constants');
 
@@ -90,7 +90,14 @@ class GTOEngine {
     // Map full ring positions to the closest defined range
     const rangeMap = { 'UTG+1': 'UTG', 'UTG+2': 'UTG', 'MP+1': 'MP', 'HJ': 'CO' };
     const range = OPENING_RANGES[position] || OPENING_RANGES[rangeMap[position]] || OPENING_RANGES['MP'];
-    const frequency = range[notation] || 0;
+
+    // For BB, use depth-adjusted defense frequencies
+    const player = gameState.players.find(p => p.holeCards?.length === 2 && p.position === position);
+    const bb = gameState.config?.bigBlind || 2;
+    const effectiveBB = player ? Math.round((player.stack + (player.bet || 0)) / bb) : 100;
+    const frequency = (position === 'BB')
+      ? getBBDefenseFreq(notation, effectiveBB)
+      : (range[notation] || 0);
 
     const hasRaise = gameState.actionHistory.some(a =>
       a.street === GAME_STATES.PREFLOP && (a.type === ACTIONS.RAISE || a.type === ACTIONS.ALL_IN)
@@ -104,12 +111,18 @@ class GTOEngine {
 
     if (!hasRaise) {
       // No one has raised yet — should we open?
+      // Deep-stack context for coaching tips
+      const depthLabel = effectiveBB >= 200 ? 'very deep' : effectiveBB >= 150 ? 'deep' : 'standard';
+      const depthTip = effectiveBB >= 150
+        ? ` With ${effectiveBB} big blinds (${depthLabel} stacks), speculative hands like small pairs and suited connectors gain extra value because you can win a huge pot when you hit.`
+        : '';
+
       if (frequency >= 0.8) {
         recommendation = {
           action: ACTIONS.RAISE,
           confidence: 'high',
           frequencies: { raise: frequency, fold: 1 - frequency },
-          reasoning: `${handName} is a strong starting hand. From ${posShort}, you should raise to build the pot and put pressure on the other players. A good bet here is about 2.5 times the big blind.`,
+          reasoning: `${handName} is a strong starting hand. From ${posShort}, you should raise to build the pot and put pressure on the other players. A good bet here is about 2.5 times the big blind.${depthTip}`,
           whyItMatters: `Raising with strong hands is important because it (1) builds the pot when you\'re likely ahead, (2) makes weaker hands pay to see more cards, and (3) narrows down how many opponents you face.`,
           plainAction: `Raise — you have a premium hand in ${posShort}.`,
           ev: this.estimateEV(frequency, gameState.config?.bigBlind || 2)

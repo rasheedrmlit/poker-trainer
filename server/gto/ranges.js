@@ -74,7 +74,7 @@ const OPENING_RANGES = {
     'JTo': 0.5, 'T9o': 0.3
   },
   BB: {
-    // BB defends wide vs opens
+    // BB defends wide vs opens (standard 100bb depth)
     'AA': 1, 'KK': 1, 'QQ': 1, 'JJ': 1, 'TT': 1, '99': 1, '88': 1, '77': 1, '66': 1, '55': 1, '44': 0.9, '33': 0.8, '22': 0.7,
     'AKs': 1, 'AQs': 1, 'AJs': 1, 'ATs': 1, 'A9s': 1, 'A8s': 1, 'A7s': 1, 'A6s': 0.9, 'A5s': 1, 'A4s': 1, 'A3s': 0.9, 'A2s': 0.8,
     'KQs': 1, 'KJs': 1, 'KTs': 1, 'K9s': 1, 'K8s': 0.8, 'K7s': 0.7, 'K6s': 0.6, 'K5s': 0.5, 'K4s': 0.4,
@@ -96,6 +96,86 @@ const OPENING_RANGES = {
     '87o': 0.5, '76o': 0.3
   }
 };
+
+/**
+ * Deep-stack BB defense adjustments.
+ * When effective stacks exceed 150bb, speculative hands (small pairs,
+ * suited connectors, suited gappers) gain a LOT of value because the
+ * implied odds skyrocket — if you hit a set or flush, you can win a
+ * massive pot. This table provides additive frequency bonuses keyed
+ * by stack depth bucket.
+ *
+ * At 300bb deep, a hand like 54s is almost always worth calling a
+ * standard raise from the BB because you only need to flop big once
+ * to win a huge pot.
+ */
+const BB_DEEP_ADJUSTMENTS = {
+  // 150-200bb deep: moderate bump to speculative hands
+  150: {
+    // Small pairs — set-mining becomes hugely profitable
+    '22': 0.3, '33': 0.2, '44': 0.1, '55': 0.05, '66': 0.05,
+    // Suited connectors — straights and flushes pay off big
+    '32s': 0.3, '43s': 0.3, '54s': 0.15, '65s': 0.1, '76s': 0.05,
+    '87s': 0.05, '98s': 0.05,
+    // Suited gappers — hidden strength when they connect
+    '53s': 0.25, '64s': 0.2, '75s': 0.15, '86s': 0.1, '97s': 0.1,
+    'T8s': 0.05, 'J8s': 0.1, 'T7s': 0.15,
+    // Suited one-gappers
+    '42s': 0.2, '63s': 0.15, '74s': 0.15, '85s': 0.15, '96s': 0.15,
+    'T7s': 0.1,
+    // Suited aces — nut flush draw potential
+    'A2s': 0.1, 'A3s': 0.1, 'A4s': 0.05, 'A5s': 0.05,
+    'A6s': 0.1, 'A7s': 0.05, 'A8s': 0.05, 'A9s': 0.05,
+    // Suited kings
+    'K4s': 0.15, 'K5s': 0.15, 'K6s': 0.1, 'K7s': 0.1,
+    // Offsuit connectors — marginal bump
+    '87o': 0.1, '76o': 0.1, '98o': 0.1,
+    'T9o': 0.1, 'J9o': 0.1, 'JTo': 0.05,
+  },
+  // 200-300bb deep: large bump — almost any suited connector / pair is playable
+  200: {
+    // All small pairs become mandatory defends
+    '22': 0.3, '33': 0.2, '44': 0.1, '55': 0.05,
+    // All suited connectors
+    '32s': 0.2, '43s': 0.2, '54s': 0.1, '65s': 0.05,
+    // All suited gappers — even 2-gappers
+    '42s': 0.15, '53s': 0.15, '63s': 0.1, '64s': 0.1,
+    '74s': 0.1, '75s': 0.1, '85s': 0.1, '86s': 0.1,
+    '96s': 0.1, '97s': 0.1, 'T7s': 0.1, 'T8s': 0.05,
+    'J7s': 0.1, 'J8s': 0.1, 'Q7s': 0.1, 'Q8s': 0.1,
+    // Suited aces — always defend deep
+    'A2s': 0.1, 'A3s': 0.05, 'A6s': 0.05,
+    // Suited kings
+    'K2s': 0.15, 'K3s': 0.1, 'K4s': 0.1, 'K5s': 0.1,
+    'K6s': 0.1, 'K7s': 0.05, 'K8s': 0.1,
+    // Suited queens
+    'Q5s': 0.1, 'Q6s': 0.1, 'Q7s': 0.1,
+    // Offsuit hands get a small bump too
+    '87o': 0.1, '76o': 0.1, '65o': 0.1, '98o': 0.1,
+    'T9o': 0.05, 'J9o': 0.1, 'T8o': 0.1,
+    'K8o': 0.1, 'K9o': 0.1, 'Q9o': 0.1,
+  }
+};
+
+/**
+ * Get effective BB defense frequency for a hand, accounting for stack depth.
+ * @param {string} notation – e.g. "54s", "22", "AKo"
+ * @param {number} effectiveBB – effective stack in big blinds
+ * @returns {number} frequency 0-1
+ */
+function getBBDefenseFreq(notation, effectiveBB) {
+  const base = OPENING_RANGES.BB[notation] || 0;
+  let bonus = 0;
+
+  if (effectiveBB >= 200) {
+    bonus += (BB_DEEP_ADJUSTMENTS[200]?.[notation] || 0);
+    bonus += (BB_DEEP_ADJUSTMENTS[150]?.[notation] || 0);
+  } else if (effectiveBB >= 150) {
+    bonus += (BB_DEEP_ADJUSTMENTS[150]?.[notation] || 0);
+  }
+
+  return Math.min(1, base + bonus);
+}
 
 // 3-bet ranges by position
 const THREE_BET_RANGES = {
@@ -158,4 +238,4 @@ function isHandInRange(card1, card2, range) {
   return range[notation] || 0;
 }
 
-module.exports = { OPENING_RANGES, THREE_BET_RANGES, getHandNotation, isHandInRange };
+module.exports = { OPENING_RANGES, THREE_BET_RANGES, BB_DEEP_ADJUSTMENTS, getHandNotation, isHandInRange, getBBDefenseFreq };
