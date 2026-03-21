@@ -692,7 +692,8 @@ class GameEngine {
         position: this.getPlayerPosition(p.seatIndex),
         holeCards: [...p.holeCards],
         stack: p.stack,
-        folded: p.folded
+        folded: p.folded,
+        totalBetThisHand: p.totalBetThisHand
       })),
       communityCards: [...this.communityCards],
       actions: [...this.actionHistory],

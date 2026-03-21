@@ -528,6 +528,7 @@ class CoachingEngine {
     let totalWon = 0;
     let handsWon = 0;
     let handsLost = 0;
+    let handsFolded = 0;
     let biggestWin = 0;
     let biggestLoss = 0;
     const grades = [];
@@ -537,17 +538,28 @@ class CoachingEngine {
       const playerInHand = hand.players.find(p => p.id === playerId);
       if (!playerInHand) continue;
 
+      // Check if player actually played (took actions beyond just posting blinds)
+      const playerActions = hand.actions.filter(a => a.playerId === playerId);
+      const didFold = playerInHand.folded;
+      const didPlay = playerActions.some(a => a.type !== 'fold') || !didFold;
+
       if (winner) {
         totalWon += winner.amount;
         handsWon++;
         if (winner.amount > biggestWin) biggestWin = winner.amount;
+      } else if (didFold && playerActions.length <= 1) {
+        // Player just folded preflop — don't count as "lost"
+        handsFolded++;
       } else {
         handsLost++;
       }
 
-      const analysis = this.getPostHandAnalysis(hand, playerId);
-      if (analysis) {
-        grades.push(analysis.overallGrade);
+      // Only grade hands where the player actually played
+      if (didPlay) {
+        const analysis = this.getPostHandAnalysis(hand, playerId);
+        if (analysis) {
+          grades.push(analysis.overallGrade);
+        }
       }
     }
 
@@ -559,6 +571,7 @@ class CoachingEngine {
       handsPlayed: handHistories.length,
       handsWon,
       handsLost,
+      handsFolded,
       winPct: handHistories.length > 0 ? Math.round(handsWon / handHistories.length * 100) : 0,
       totalWon,
       winRate: handHistories.length > 0 ? +(totalWon / handHistories.length).toFixed(2) : 0,
