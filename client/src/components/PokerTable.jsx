@@ -1,5 +1,6 @@
 import Card from './Card';
 import PlayerSeat from './PlayerSeat';
+import PreflopBadge from './PreflopBadge';
 import { formatChips } from '../utils/cards';
 
 // Seat positions for 2-10 players arranged around an oval table
@@ -124,6 +125,15 @@ export default function PokerTable({ gameState, playerId, lastAction }) {
           <div key={`ph-${i}`} className="w-[72px] h-[104px] rounded-lg border border-white/5" />
         ))}
       </div>
+
+      {/* Preflop hand strength badge for hero */}
+      {(() => {
+        const hero = players.find(p => p.id === playerId);
+        if (hero?.holeCards?.length === 2 && gameState.state !== 'waiting' && gameState.state !== 'hand_complete') {
+          return <PreflopBadge cards={hero.holeCards} />;
+        }
+        return null;
+      })()}
 
       {/* Player seats */}
       {reordered.map((player, i) => {

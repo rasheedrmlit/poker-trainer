@@ -3,6 +3,7 @@ import { Routes, Route, useNavigate } from 'react-router-dom';
 import Home from './pages/Home';
 import Table from './pages/Table';
 import Guide from './pages/Guide';
+import HandChart from './pages/HandChart';
 import { useSocket } from './hooks/useSocket';
 
 export default function App() {
@@ -16,6 +17,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home playerName={playerName} setPlayerName={setPlayerName} />} />
         <Route path="/guide" element={<Guide />} />
+        <Route path="/hand-chart" element={<HandChart />} />
         <Route path="/table/:tableId" element={<Table socket={socket} playerName={playerName} />} />
       </Routes>
     </div>

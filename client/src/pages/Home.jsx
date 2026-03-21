@@ -245,8 +245,14 @@ export default function Home({ playerName, setPlayerName }) {
         <div className="mt-6 text-gold animate-pulse-soft">Setting up table...</div>
       )}
 
-      {/* Strategy Guide */}
-      <div className="w-full max-w-sm mt-3">
+      {/* Guides */}
+      <div className="w-full max-w-sm mt-3 space-y-2">
+        <button
+          onClick={() => navigate('/hand-chart')}
+          className="w-full bg-gray-800/50 border border-gray-700 text-gray-300 font-semibold py-3 px-6 rounded-xl text-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+        >
+          <span className="text-gold">🃏</span> Hand Strength Chart — Which Hands to Play
+        </button>
         <button
           onClick={() => navigate('/guide')}
           className="w-full bg-gray-800/50 border border-gray-700 text-gray-300 font-semibold py-3 px-6 rounded-xl text-sm active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
