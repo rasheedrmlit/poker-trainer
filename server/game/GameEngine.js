@@ -537,13 +537,15 @@ class GameEngine {
   }
 
   resolveHandOnePlayer(winner) {
-    winner.stack += this.pot;
-    winner.stats.totalWinnings += this.pot;
+    const potAmount = this.pot;
+    winner.stack += potAmount;
+    winner.stats.totalWinnings += potAmount;
     const result = [{
       playerId: winner.id,
       name: winner.name,
-      amount: this.pot,
-      hand: null
+      amount: potAmount,
+      hand: null,
+      holeCards: winner.holeCards
     }];
     this.pot = 0;
     return result;
@@ -555,47 +557,91 @@ class GameEngine {
 
     if (playersInHand.length === 0) return winners;
 
-    // Calculate side pots
-    const pots = this.calculateSidePots(playersInHand);
+    // Fallback: if side pot calculation fails, use simple pot distribution
+    const totalPot = this.pot;
+    let distributed = 0;
 
-    for (const pot of pots) {
-      const eligible = pot.eligible;
-      let bestEval = null;
-      let potWinners = [];
+    try {
+      // Calculate side pots
+      const pots = this.calculateSidePots(playersInHand);
 
-      for (const player of eligible) {
-        const handEval = evaluateHand(player.holeCards, this.communityCards);
-        if (!bestEval || compareHandValues(handEval, bestEval) > 0) {
-          bestEval = handEval;
-          potWinners = [{ player, eval: handEval }];
-        } else if (compareHandValues(handEval, bestEval) === 0) {
-          potWinners.push({ player, eval: handEval });
+      for (const pot of pots) {
+        const eligible = pot.eligible;
+        let bestEval = null;
+        let potWinners = [];
+
+        for (const player of eligible) {
+          const handEval = evaluateHand(player.holeCards, this.communityCards);
+          if (!handEval) continue; // skip if evaluation fails
+          if (!bestEval || compareHandValues(handEval, bestEval) > 0) {
+            bestEval = handEval;
+            potWinners = [{ player, eval: handEval }];
+          } else if (compareHandValues(handEval, bestEval) === 0) {
+            potWinners.push({ player, eval: handEval });
+          }
         }
+
+        if (potWinners.length === 0) continue;
+
+        const share = Math.floor(pot.amount / potWinners.length);
+        const remainder = pot.amount - share * potWinners.length;
+
+        potWinners.forEach((pw, i) => {
+          const amount = share + (i === 0 ? remainder : 0);
+          pw.player.stack += amount;
+          pw.player.stats.totalWinnings += amount;
+          distributed += amount;
+
+          const existing = winners.find(w => w.playerId === pw.player.id);
+          if (existing) {
+            existing.amount += amount;
+          } else {
+            winners.push({
+              playerId: pw.player.id,
+              name: pw.player.name,
+              amount,
+              hand: pw.eval,
+              handName: HAND_RANK_NAMES[pw.eval.rank],
+              holeCards: pw.player.holeCards
+            });
+          }
+        });
       }
+    } catch (err) {
+      console.error('Side pot calculation error:', err.message);
+    }
 
-      const share = Math.floor(pot.amount / potWinners.length);
-      const remainder = pot.amount - share * potWinners.length;
-
-      potWinners.forEach((pw, i) => {
-        const amount = share + (i === 0 ? remainder : 0);
-        pw.player.stack += amount;
-        pw.player.stats.totalWinnings += amount;
-
-        const existing = winners.find(w => w.playerId === pw.player.id);
-        if (existing) {
-          existing.amount += amount;
-        } else {
+    // Safety net: if pot wasn't fully distributed, give remainder to first winner
+    // or if no winners found, give to first non-folded player
+    if (distributed < totalPot) {
+      const undistributed = totalPot - distributed;
+      if (winners.length > 0) {
+        const firstWinner = playersInHand.find(p => p.id === winners[0].playerId);
+        if (firstWinner) {
+          firstWinner.stack += undistributed;
+          firstWinner.stats.totalWinnings += undistributed;
+          winners[0].amount += undistributed;
+        }
+      } else {
+        // No winners found at all — give pot to first non-folded player
+        const fallbackWinner = playersInHand[0];
+        if (fallbackWinner) {
+          fallbackWinner.stack += totalPot;
+          fallbackWinner.stats.totalWinnings += totalPot;
           winners.push({
-            playerId: pw.player.id,
-            name: pw.player.name,
-            amount,
-            hand: pw.eval,
-            handName: HAND_RANK_NAMES[pw.eval.rank],
-            holeCards: pw.player.holeCards
+            playerId: fallbackWinner.id,
+            name: fallbackWinner.name,
+            amount: totalPot,
+            hand: null,
+            handName: 'Winner',
+            holeCards: fallbackWinner.holeCards
           });
         }
-      });
+      }
     }
+
+    // Clear pot — it's been distributed
+    this.pot = 0;
 
     // Track WTSD
     for (const p of playersInHand) {

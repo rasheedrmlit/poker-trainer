@@ -476,6 +476,7 @@ function handleHandComplete(tableId, result) {
   const table = tables.get(tableId);
   if (!table) return;
 
+  // Broadcast updated game state (stacks should reflect pot distribution)
   broadcastGameState(tableId);
 
   // Send showdown data
@@ -486,13 +487,14 @@ function handleHandComplete(tableId, result) {
       id: p.id,
       name: p.name,
       holeCards: p.holeCards,
-      folded: p.folded
+      folded: p.folded,
+      stack: p.stack
     })),
     communityCards: table.engine.communityCards
   });
 
-  // Do NOT auto-start — let the player review coaching, then click "Deal Next Hand"
-  // The 'start-next-hand' socket event handles this.
+  // Send one more game state update after a short delay to ensure client has final stacks
+  setTimeout(() => broadcastGameState(tableId), 200);
 }
 
 // Serve client in production

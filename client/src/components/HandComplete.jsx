@@ -19,7 +19,7 @@ export default function HandComplete({ data, playerId, onGetAnalysis, analysis, 
 
   const [showStreets, setShowStreets] = useState(false);
   const [showImprovements, setShowImprovements] = useState(false);
-  const [countdown, setCountdown] = useState(isTraining ? null : 3);
+  const [countdown, setCountdown] = useState(isTraining ? null : 5);
 
   const isWinner = data.winners?.some(w => w.playerId === playerId);
   const myWinnings = data.winners?.find(w => w.playerId === playerId)?.amount || 0;
