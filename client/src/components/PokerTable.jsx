@@ -80,7 +80,7 @@ const SEAT_LAYOUTS = {
   ]
 };
 
-export default function PokerTable({ gameState, playerId, lastAction }) {
+export default function PokerTable({ gameState, playerId, lastAction, isTraining = false }) {
   if (!gameState) return null;
 
   const players = gameState.players || [];
@@ -126,8 +126,8 @@ export default function PokerTable({ gameState, playerId, lastAction }) {
         ))}
       </div>
 
-      {/* Preflop hand strength badge for hero */}
-      {(() => {
+      {/* Preflop hand strength badge for hero — training mode only */}
+      {isTraining && (() => {
         const hero = players.find(p => p.id === playerId);
         if (hero?.holeCards?.length === 2 && gameState.state !== 'waiting' && gameState.state !== 'hand_complete') {
           return <PreflopBadge cards={hero.holeCards} />;

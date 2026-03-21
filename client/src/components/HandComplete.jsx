@@ -14,11 +14,12 @@ const gradeEmojis = {
   'C': 'Room to improve.', 'D': 'Needs work.', 'F': 'Big mistakes found.'
 };
 
-export default function HandComplete({ data, playerId, onGetAnalysis, analysis, onNextHand }) {
+export default function HandComplete({ data, playerId, onGetAnalysis, analysis, onNextHand, isTraining = false }) {
   if (!data) return null;
 
   const [showStreets, setShowStreets] = useState(false);
   const [showImprovements, setShowImprovements] = useState(false);
+  const [countdown, setCountdown] = useState(isTraining ? null : 3);
 
   const isWinner = data.winners?.some(w => w.playerId === playerId);
   const myWinnings = data.winners?.find(w => w.playerId === playerId)?.amount || 0;
@@ -31,9 +32,20 @@ export default function HandComplete({ data, playerId, onGetAnalysis, analysis, 
     }
   }, []);
 
+  // Auto-advance to next hand after 3s in non-training mode
+  useEffect(() => {
+    if (isTraining || countdown === null) return;
+    if (countdown <= 0) {
+      onNextHand();
+      return;
+    }
+    const timer = setTimeout(() => setCountdown(prev => prev - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown, isTraining, onNextHand]);
+
   return (
     <div className="absolute inset-0 z-40 flex items-end sm:items-center justify-center pointer-events-none">
-      <div className="bg-gray-900/97 backdrop-blur-md rounded-t-2xl sm:rounded-2xl p-5 mx-0 sm:mx-4 max-w-md w-full border-t sm:border border-gray-700 animate-slide-up pointer-events-auto max-h-[85vh] overflow-y-auto pb-24 sm:pb-5">
+      <div className="bg-gray-900/97 backdrop-blur-md rounded-t-2xl sm:rounded-2xl p-5 mx-0 sm:mx-4 max-w-lg w-full border-t sm:border border-gray-700 animate-slide-up pointer-events-auto max-h-[95vh] overflow-y-auto pb-24 sm:pb-5">
 
         {/* Result Banner */}
         <div className="text-center mb-4">
@@ -216,15 +228,31 @@ export default function HandComplete({ data, playerId, onGetAnalysis, analysis, 
           </div>
         )}
 
-        {/* ========== DEAL NEXT HAND BUTTON ========== */}
+        {/* ========== DEAL NEXT HAND ========== */}
         <div className="mt-4 sticky bottom-0 pt-2 bg-gray-900/95">
-          <button
-            onClick={onNextHand}
-            className="w-full bg-gradient-to-r from-gold-dark to-gold text-black font-bold py-4 rounded-xl text-lg active:scale-[0.97] transition-transform shadow-lg shadow-gold/20"
-          >
-            Deal Next Hand
-          </button>
-          <p className="text-center text-gray-600 text-[10px] mt-1">Take your time reviewing the analysis above</p>
+          {isTraining ? (
+            <>
+              <button
+                onClick={onNextHand}
+                className="w-full bg-gradient-to-r from-gold-dark to-gold text-black font-bold py-4 rounded-xl text-lg active:scale-[0.97] transition-transform shadow-lg shadow-gold/20"
+              >
+                Deal Next Hand
+              </button>
+              <p className="text-center text-gray-600 text-[10px] mt-1">Take your time reviewing the analysis above</p>
+            </>
+          ) : (
+            <div className="text-center">
+              <p className="text-gray-500 text-xs">
+                Next hand in <span className="text-gold font-bold">{countdown ?? 0}s</span>
+              </p>
+              <button
+                onClick={onNextHand}
+                className="text-gray-600 text-[10px] underline mt-1 active:text-gray-400"
+              >
+                Deal now
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

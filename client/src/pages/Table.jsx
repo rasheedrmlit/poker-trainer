@@ -87,6 +87,7 @@ export default function Table({ socket, playerName }) {
           gameState={gameState}
           playerId={playerId}
           lastAction={lastAction}
+          isTraining={isTraining}
         />
       </div>
 
@@ -97,6 +98,7 @@ export default function Table({ socket, playerName }) {
           playerId={playerId}
           onGetAnalysis={() => getHandAnalysis()}
           analysis={handAnalysis}
+          isTraining={isTraining}
           onNextHand={() => {
             startNextHand();
           }}
