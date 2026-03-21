@@ -1,20 +1,24 @@
 import { useState } from 'react';
-import { getPreflopStrength } from '../utils/preflopStrength';
+import { getPreflopStrength, getDeepStackStrength } from '../utils/preflopStrength';
 
 /**
  * A small badge shown near the hero's cards during a hand (training mode).
  * Shows the preflop win percentage against a random opponent.
+ * Uses deep-stack strength when effectiveBB >= 150.
  * Tap to expand/collapse the description.
  */
-export default function PreflopBadge({ cards }) {
+export default function PreflopBadge({ cards, effectiveBB = 100 }) {
   const [expanded, setExpanded] = useState(false);
 
   if (!cards || cards.length < 2) return null;
 
-  const data = getPreflopStrength(cards[0], cards[1]);
+  const isDeep = effectiveBB >= 150;
+  const data = isDeep
+    ? getDeepStackStrength(cards[0], cards[1])
+    : getPreflopStrength(cards[0], cards[1]);
   if (!data) return null;
 
-  const { key, winEquity, tierLabel, tierColor, description } = data;
+  const { key, winEquity, tierLabel, tierColor, description, deepBonus } = data;
 
   return (
     <div
@@ -48,6 +52,9 @@ export default function PreflopBadge({ cards }) {
           {tierLabel}
         </span>
 
+        {/* Deep indicator */}
+        {isDeep && <span className="text-red-400 text-[9px] font-bold">DEEP</span>}
+
         {/* Expand chevron */}
         <span className="text-white/40 text-[10px]">{expanded ? '▼' : '▶'}</span>
       </div>
@@ -66,7 +73,12 @@ export default function PreflopBadge({ cards }) {
             {winEquity >= 50 && winEquity < 60 && ' Slightly better than a coin flip — position and post-flop play matter a lot.'}
             {winEquity < 50 && ' You\'re an underdog — be selective about when you play this.'}
           </p>
-          <p className="text-gray-600 text-[9px] mt-1.5">
+          {isDeep && deepBonus > 0 && (
+            <p className="text-red-300 text-[10px] mt-1.5">
+              Deep-stack bonus: This hand is more playable at {effectiveBB} BB because the implied odds (potential future winnings) are much larger.
+            </p>
+          )}
+          <p className="text-gray-600 text-[9px] mt-1">
             With more opponents at the table, your win % goes down. Tap to close.
           </p>
         </div>

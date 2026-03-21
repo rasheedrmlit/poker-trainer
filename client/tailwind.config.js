@@ -4,9 +4,9 @@ export default {
   theme: {
     extend: {
       colors: {
-        felt: '#1a5c2e',
-        'felt-dark': '#0f3d1e',
-        'felt-light': '#2a7a42',
+        felt: 'var(--felt, #1a5c2e)',
+        'felt-dark': 'var(--felt-dark, #0f3d1e)',
+        'felt-light': 'var(--felt-light, #2a7a42)',
         gold: '#d4af37',
         'gold-dark': '#b8960f',
         chip: {

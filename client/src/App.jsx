@@ -5,12 +5,18 @@ import Table from './pages/Table';
 import Guide from './pages/Guide';
 import HandChart from './pages/HandChart';
 import { useSocket } from './hooks/useSocket';
+import { applyFeltTheme, getStoredFelt } from './utils/feltThemes';
 
 export default function App() {
   const socket = useSocket();
   const [playerName, setPlayerName] = useState(() =>
     localStorage.getItem('poker_name') || ''
   );
+
+  // Apply stored felt theme on mount
+  useEffect(() => {
+    applyFeltTheme(getStoredFelt());
+  }, []);
 
   return (
     <div className="w-full h-full bg-gray-950 text-white font-poker">

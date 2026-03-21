@@ -1,11 +1,19 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { formatChips } from '../utils/cards';
+import { FELT_THEMES, applyFeltTheme, getStoredFelt } from '../utils/feltThemes';
 
 export default function TopBar({ gameState, tableId, isTraining, onOpenSidebar, onAddAI }) {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [currentFelt, setCurrentFelt] = useState(getStoredFelt());
+  const [showFelts, setShowFelts] = useState(false);
+
+  const changeFelt = (themeId) => {
+    applyFeltTheme(themeId);
+    setCurrentFelt(themeId);
+  };
 
   const copyTableLink = () => {
     const link = `${window.location.origin}/table/${tableId}`;
@@ -86,6 +94,39 @@ export default function TopBar({ gameState, tableId, isTraining, onOpenSidebar, 
                 </button>
               ))}
             </div>
+            {/* Felt selector */}
+            <div className="border-t border-gray-700">
+              <button
+                onClick={() => setShowFelts(!showFelts)}
+                className="w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-gray-700 active:bg-gray-600 transition-colors flex items-center justify-between"
+              >
+                <span>Table Felt</span>
+                <span className="text-xs text-gray-500">{showFelts ? '▼' : '▶'}</span>
+              </button>
+              {showFelts && (
+                <div className="px-3 pb-3 grid grid-cols-4 gap-1.5">
+                  {FELT_THEMES.map(theme => (
+                    <button
+                      key={theme.id}
+                      onClick={() => changeFelt(theme.id)}
+                      className={`flex flex-col items-center gap-1 p-1.5 rounded-lg transition-all ${
+                        currentFelt === theme.id ? 'ring-2 ring-white bg-gray-700' : 'active:bg-gray-700'
+                      }`}
+                    >
+                      <div
+                        className="w-8 h-8 rounded-full border-2"
+                        style={{
+                          background: `radial-gradient(circle, ${theme.feltLight}, ${theme.felt})`,
+                          borderColor: theme.rail,
+                        }}
+                      />
+                      <span className="text-[8px] text-gray-400 leading-tight text-center">{theme.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <button
               onClick={() => {
                 const link = `${window.location.origin}/table/${tableId}`;
