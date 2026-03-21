@@ -108,6 +108,84 @@ const HAND_RANKS = {
   '32o': 2,
 };
 
+/**
+ * Preflop WIN EQUITY — the actual percentage chance of winning against
+ * ONE random opponent heads-up, all-in preflop to the river.
+ * These are standard values from Monte Carlo simulations.
+ */
+const WIN_EQUITY = {
+  // Pairs
+  'AA': 85.3, 'KK': 82.4, 'QQ': 79.9, 'JJ': 77.5, 'TT': 75.0,
+  '99': 72.1, '88': 69.2, '77': 66.2, '66': 63.3, '55': 60.3,
+  '44': 57.0, '33': 53.7, '22': 50.3,
+  // Suited Aces
+  'AKs': 67.0, 'AQs': 66.1, 'AJs': 65.4, 'ATs': 64.7, 'A9s': 63.0,
+  'A8s': 62.1, 'A7s': 61.1, 'A6s': 60.0, 'A5s': 60.5, 'A4s': 59.5,
+  'A3s': 58.7, 'A2s': 57.8,
+  // Offsuit Aces
+  'AKo': 65.4, 'AQo': 64.5, 'AJo': 63.6, 'ATo': 62.9, 'A9o': 60.9,
+  'A8o': 59.9, 'A7o': 58.7, 'A6o': 57.5, 'A5o': 58.0, 'A4o': 57.1,
+  'A3o': 56.3, 'A2o': 55.5,
+  // Suited Kings
+  'KQs': 63.4, 'KJs': 62.6, 'KTs': 61.9, 'K9s': 60.0, 'K8s': 58.5,
+  'K7s': 57.8, 'K6s': 56.8, 'K5s': 55.8, 'K4s': 54.9, 'K3s': 54.1,
+  'K2s': 53.2,
+  // Offsuit Kings
+  'KQo': 61.4, 'KJo': 60.6, 'KTo': 59.9, 'K9o': 57.9, 'K8o': 56.3,
+  'K7o': 55.4, 'K6o': 54.3, 'K5o': 53.3, 'K4o': 52.3, 'K3o': 51.5,
+  'K2o': 50.7,
+  // Suited Queens
+  'QJs': 60.3, 'QTs': 59.5, 'Q9s': 57.9, 'Q8s': 56.2, 'Q7s': 54.6,
+  'Q6s': 54.0, 'Q5s': 53.1, 'Q4s': 52.1, 'Q3s': 51.3, 'Q2s': 50.4,
+  // Offsuit Queens
+  'QJo': 58.2, 'QTo': 57.4, 'Q9o': 55.5, 'Q8o': 53.8, 'Q7o': 52.2,
+  'Q6o': 51.4, 'Q5o': 50.3, 'Q4o': 49.3, 'Q3o': 48.5, 'Q2o': 47.7,
+  // Suited Jacks
+  'JTs': 57.5, 'J9s': 55.8, 'J8s': 54.2, 'J7s': 52.4, 'J6s': 51.1,
+  'J5s': 50.4, 'J4s': 49.4, 'J3s': 48.6, 'J2s': 47.8,
+  // Offsuit Jacks
+  'JTo': 55.4, 'J9o': 53.4, 'J8o': 51.7, 'J7o': 49.9, 'J6o': 48.5,
+  'J5o': 47.6, 'J4o': 46.6, 'J3o': 45.8, 'J2o': 44.9,
+  // Suited Tens
+  'T9s': 54.3, 'T8s': 52.6, 'T7s': 51.0, 'T6s': 49.3, 'T5s': 48.0,
+  'T4s': 47.2, 'T3s': 46.3, 'T2s': 45.5,
+  // Offsuit Tens
+  'T9o': 52.1, 'T8o': 50.2, 'T7o': 48.5, 'T6o': 46.7, 'T5o': 45.2,
+  'T4o': 44.3, 'T3o': 43.4, 'T2o': 42.6,
+  // Suited 9x
+  '98s': 51.1, '97s': 49.5, '96s': 47.8, '95s': 46.2, '94s': 44.5,
+  '93s': 43.9, '92s': 43.1,
+  // Offsuit 9x
+  '98o': 48.9, '97o': 47.0, '96o': 45.2, '95o': 43.5, '94o': 41.7,
+  '93o': 41.0, '92o': 40.2,
+  // Suited 8x
+  '87s': 48.2, '86s': 46.5, '85s': 44.8, '84s': 43.1, '83s': 41.6,
+  '82s': 41.0,
+  // Offsuit 8x
+  '87o': 45.9, '86o': 44.0, '85o': 42.2, '84o': 40.4, '83o': 38.8,
+  '82o': 38.1,
+  // Suited 7x
+  '76s': 45.2, '75s': 43.6, '74s': 41.8, '73s': 40.3, '72s': 38.9,
+  // Offsuit 7x
+  '76o': 42.9, '75o': 41.1, '74o': 39.1, '73o': 37.5, '72o': 36.0,
+  // Suited 6x
+  '65s': 42.4, '64s': 40.7, '63s': 39.1, '62s': 37.8,
+  // Offsuit 6x
+  '65o': 40.0, '64o': 38.1, '63o': 36.4, '62o': 35.0,
+  // Suited 5x
+  '54s': 40.1, '53s': 38.5, '52s': 37.2,
+  // Offsuit 5x
+  '54o': 37.6, '53o': 35.8, '52o': 34.4,
+  // Suited 4x
+  '43s': 37.0, '42s': 35.7,
+  // Offsuit 4x
+  '43o': 34.1, '42o': 32.7,
+  // Suited 3x
+  '32s': 34.3,
+  // Offsuit 3x
+  '32o': 31.2,
+};
+
 // Rank ordering for normalizing hand notation
 const RANK_ORDER = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
 
@@ -146,7 +224,8 @@ export function getPreflopStrength(card1, card2) {
   if (!key) return null;
 
   const pct = HAND_RANKS[key] ?? null;
-  if (pct === null) return { key, percentile: 30, tier: 'weak', tierLabel: 'Weak', tierColor: '#ef4444', description: 'This hand is below average. Fold it most of the time unless you have great position.' };
+  const equity = WIN_EQUITY[key] ?? null;
+  if (pct === null) return { key, percentile: 30, winEquity: equity || 32, tier: 'weak', tierLabel: 'Weak', tierColor: '#ef4444', description: 'This hand is below average. Fold it most of the time unless you have great position.' };
 
   let tier, tierLabel, tierColor, description;
 
@@ -182,7 +261,7 @@ export function getPreflopStrength(card1, card2) {
     description = 'This hand loses money long-term. Fold unless you\'re in the big blind and no one raised.';
   }
 
-  return { key, percentile: pct, tier, tierLabel, tierColor, description };
+  return { key, percentile: pct, winEquity: equity || 40, tier, tierLabel, tierColor, description };
 }
 
 /**
@@ -215,6 +294,7 @@ export function getHandGrid() {
       row.push({
         key,
         percentile: pct,
+        winEquity: data?.winEquity || 32,
         tier: data?.tier || 'trash',
         tierLabel: data?.tierLabel || 'Fold',
         tierColor: data?.tierColor || '#ef4444',

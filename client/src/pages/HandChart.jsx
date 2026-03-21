@@ -138,12 +138,12 @@ export default function HandChart() {
                   <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: selected.tierColor + '30', color: selected.tierColor }}>
                     {selected.tierLabel}
                   </span>
-                  <span className="text-xs text-gray-400">
-                    Top {100 - selected.percentile + 1}% of hands
+                  <span className="text-sm font-bold" style={{ color: selected.tierColor }}>
+                    {selected.winEquity?.toFixed(1)}% win rate
                   </span>
                 </div>
                 <div className="text-[10px] text-gray-500 mt-0.5">
-                  Beats {selected.percentile}% of all starting hands
+                  Wins {selected.winEquity?.toFixed(1)}% vs a random hand heads-up
                   {selected.suited && ' • Same suit (can make flushes)'}
                   {selected.offsuit && ' • Different suits'}
                   {selected.pair && ' • Pocket pair'}

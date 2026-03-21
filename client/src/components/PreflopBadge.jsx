@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { getPreflopStrength } from '../utils/preflopStrength';
 
 /**
- * A small badge shown near the hero's cards during a hand.
- * Shows the preflop percentile and a plain-English tier label.
+ * A small badge shown near the hero's cards during a hand (training mode).
+ * Shows the preflop win percentage against a random opponent.
  * Tap to expand/collapse the description.
  */
 export default function PreflopBadge({ cards }) {
@@ -14,7 +14,7 @@ export default function PreflopBadge({ cards }) {
   const data = getPreflopStrength(cards[0], cards[1]);
   if (!data) return null;
 
-  const { key, percentile, tierLabel, tierColor, description } = data;
+  const { key, winEquity, tierLabel, tierColor, description } = data;
 
   return (
     <div
@@ -35,9 +35,9 @@ export default function PreflopBadge({ cards }) {
         {/* Separator */}
         <span className="text-white/20 text-[10px]">|</span>
 
-        {/* Percentile */}
-        <span className="text-[12px] font-black" style={{ color: tierColor }}>
-          Top {100 - percentile + 1}%
+        {/* Win percentage */}
+        <span className="text-[13px] font-black" style={{ color: tierColor }}>
+          {winEquity.toFixed(1)}% win
         </span>
 
         {/* Tier */}
@@ -55,18 +55,20 @@ export default function PreflopBadge({ cards }) {
       {/* Expanded description */}
       {expanded && (
         <div
-          className="mt-1.5 rounded-xl px-3.5 py-2.5 text-[12px] leading-relaxed max-w-[280px] animate-slide-up shadow-xl border border-white/10"
+          className="mt-1.5 rounded-xl px-3.5 py-2.5 text-[12px] leading-relaxed max-w-[300px] animate-slide-up shadow-xl border border-white/10"
           style={{ backgroundColor: 'rgba(0,0,0,0.85)' }}
         >
           <p className="text-gray-200">{description}</p>
-          <p className="text-gray-500 text-[10px] mt-1.5">
-            This hand beats roughly {percentile}% of all starting hands.
-            {percentile >= 85 && ' You have a monster — play it aggressively!'}
-            {percentile >= 50 && percentile < 85 && ' Solid cards — position matters here.'}
-            {percentile < 50 && percentile >= 30 && ' Be cautious. Consider your seat at the table.'}
-            {percentile < 30 && ' Tread carefully — most pros would fold this.'}
+          <p className="text-gray-400 text-[11px] mt-1.5">
+            Against one random opponent, this hand wins about <strong className="text-white">{winEquity.toFixed(1)}%</strong> of the time when both players go all-in before the flop.
+            {winEquity >= 70 && ' That\'s a monster — you\'re a huge favorite!'}
+            {winEquity >= 60 && winEquity < 70 && ' You\'re a solid favorite heads-up.'}
+            {winEquity >= 50 && winEquity < 60 && ' Slightly better than a coin flip — position and post-flop play matter a lot.'}
+            {winEquity < 50 && ' You\'re an underdog — be selective about when you play this.'}
           </p>
-          <p className="text-gray-600 text-[9px] mt-1">Tap to close</p>
+          <p className="text-gray-600 text-[9px] mt-1.5">
+            With more opponents at the table, your win % goes down. Tap to close.
+          </p>
         </div>
       )}
     </div>
