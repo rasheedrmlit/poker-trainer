@@ -21,8 +21,9 @@ export default function HandComplete({ data, playerId, onGetAnalysis, analysis, 
   const [showImprovements, setShowImprovements] = useState(false);
   const [countdown, setCountdown] = useState(isTraining ? null : 5);
 
-  const isWinner = data.winners?.some(w => w.playerId === playerId);
-  const myWinnings = data.winners?.find(w => w.playerId === playerId)?.amount || 0;
+  const myWinner = data.winners?.find(w => w.playerId === playerId);
+  const isWinner = !!myWinner;
+  const myWinnings = myWinner?.amount || 0;
 
   // Auto-request analysis when hand completes
   useEffect(() => {
@@ -52,6 +53,14 @@ export default function HandComplete({ data, playerId, onGetAnalysis, analysis, 
           <div className={`text-2xl font-black ${isWinner ? 'text-gold' : 'text-white'}`}>
             {isWinner ? `You Won ${formatChips(myWinnings)}!` : 'You Didn\'t Win This One'}
           </div>
+          {isWinner && myWinner && myWinner.netGain !== undefined && (
+            <div className="mt-1 flex items-center justify-center gap-3 text-sm">
+              <span className="text-gray-400">Stack: {formatChips(myWinner.stackBefore)}</span>
+              <span className="text-gold font-bold">→</span>
+              <span className="text-green-400 font-bold">{formatChips(myWinner.stackAfter)}</span>
+              <span className="text-green-400 text-xs">(+{formatChips(myWinner.netGain)})</span>
+            </div>
+          )}
           {!isWinner && (
             <p className="text-gray-300 text-sm mt-1">Every hand is a chance to learn. Let's review what happened.</p>
           )}

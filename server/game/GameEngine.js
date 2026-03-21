@@ -538,6 +538,7 @@ class GameEngine {
 
   resolveHandOnePlayer(winner) {
     const potAmount = this.pot;
+    const stackBefore = winner.stack;
     winner.stack += potAmount;
     winner.stats.totalWinnings += potAmount;
     const result = [{
@@ -545,7 +546,10 @@ class GameEngine {
       name: winner.name,
       amount: potAmount,
       hand: null,
-      holeCards: winner.holeCards
+      holeCards: winner.holeCards,
+      stackBefore,
+      stackAfter: winner.stack,
+      netGain: winner.stack - stackBefore
     }];
     this.pot = 0;
     return result;
@@ -556,6 +560,12 @@ class GameEngine {
     const winners = [];
 
     if (playersInHand.length === 0) return winners;
+
+    // Snapshot stacks BEFORE distribution so we can show deltas
+    const stacksBefore = new Map();
+    for (const [id, p] of this.players) {
+      stacksBefore.set(id, p.stack);
+    }
 
     // Fallback: if side pot calculation fails, use simple pot distribution
     const totalPot = this.pot;
@@ -643,6 +653,15 @@ class GameEngine {
     // Clear pot — it's been distributed
     this.pot = 0;
 
+    // Add stack delta info to each winner
+    for (const w of winners) {
+      const before = stacksBefore.get(w.playerId) || 0;
+      const player = this.players.get(w.playerId);
+      w.stackBefore = before;
+      w.stackAfter = player ? player.stack : before + w.amount;
+      w.netGain = w.stackAfter - before;
+    }
+
     // Track WTSD
     for (const p of playersInHand) {
       p.stats.wtsdOpps++;
@@ -653,29 +672,40 @@ class GameEngine {
   }
 
   calculateSidePots(playersInHand) {
-    const sorted = [...playersInHand].sort((a, b) => a.totalBetThisHand - b.totalBetThisHand);
+    // Get all unique bet levels from ALL players (including folded)
+    const allPlayers = [...this.players.values()];
+
+    // Get unique non-zero bet levels from players still in hand
+    const betLevels = [...new Set(playersInHand.map(p => p.totalBetThisHand))].sort((a, b) => a - b).filter(b => b > 0);
+
+    if (betLevels.length === 0) {
+      // Everyone has 0 bets — just return the whole pot
+      return [{ amount: this.pot, eligible: playersInHand }];
+    }
+
     const pots = [];
     let processedBet = 0;
 
-    for (let i = 0; i < sorted.length; i++) {
-      const player = sorted[i];
-      const betLevel = player.totalBetThisHand;
+    for (const betLevel of betLevels) {
+      if (betLevel <= processedBet) continue;
 
-      if (betLevel > processedBet) {
-        const contribution = betLevel - processedBet;
-        const eligible = sorted.filter(p => p.totalBetThisHand >= betLevel);
-        // Include folded players' contributions
-        let potAmount = 0;
-        for (const [id, p] of this.players) {
-          const contrib = Math.min(p.totalBetThisHand, betLevel) - Math.min(p.totalBetThisHand, processedBet);
-          potAmount += Math.max(0, contrib);
-        }
+      // Players eligible for this pot level (non-folded with enough bet)
+      const eligible = playersInHand.filter(p => p.totalBetThisHand >= betLevel);
 
-        pots.push({ amount: potAmount, eligible });
-        processedBet = betLevel;
+      // Calculate pot amount from ALL players (including folded)
+      let potAmount = 0;
+      for (const p of allPlayers) {
+        const contrib = Math.min(p.totalBetThisHand, betLevel) - Math.min(p.totalBetThisHand, processedBet);
+        if (contrib > 0) potAmount += contrib;
       }
+
+      if (potAmount > 0 && eligible.length > 0) {
+        pots.push({ amount: potAmount, eligible });
+      }
+      processedBet = betLevel;
     }
 
+    // Safety: if no pots were created but pot > 0, create one pot for all
     if (pots.length === 0 && this.pot > 0) {
       pots.push({ amount: this.pot, eligible: playersInHand });
     }
