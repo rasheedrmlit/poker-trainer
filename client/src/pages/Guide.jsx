@@ -358,6 +358,135 @@ Stop thinking about individual hand results. A good decision might lose this tim
     ]
   },
   {
+    id: 'deep',
+    title: 'Deep Stack Play',
+    level: 'Advanced',
+    levelColor: 'text-red-400 bg-red-900/30',
+    topics: [
+      {
+        title: 'What Makes Deep Stacks Different?',
+        content: `In a standard poker game you start with about 100 big blinds (100 BB). In a deep-stack game you might have 150, 200, or even 300 BB. That extra money changes almost everything about how you should play.
+
+**Why depth matters — the short version:**
+When stacks are deep, every pot has the potential to become enormous. A single hand can win or lose your entire stack. This means:
+
+- **Speculative hands become much more valuable.** A small pair like 3-3 isn't exciting at 50 BB because you can't win enough when you hit a set. At 300 BB, hitting a set can win you a massive pot — easily 10-20 times what you invested preflop.
+- **Position becomes even more important.** Deeper stacks mean more betting rounds with bigger decisions. Being last to act gives you a huge information advantage on every street.
+- **Big pairs become trickier.** At 100 BB, you're happy to put it all in with Aces preflop. At 300 BB, you might get all-in and still lose — because the hands that call you deep (sets, two pair) have you crushed.
+- **Post-flop skill matters more.** Shallow stacks mean fewer decisions. Deep stacks mean more streets, more bets, and more opportunities for the better player to outplay their opponent.
+
+**Bottom line:** Deep-stack poker rewards patience, creativity, and post-flop skill. If you're a beginner, start with standard stacks and work your way up.`
+      },
+      {
+        title: 'Implied Odds — The Engine of Deep-Stack Play',
+        content: `"Implied odds" means the money you expect to win on future streets if you hit your hand. This is THE most important concept in deep-stack poker.
+
+**Regular pot odds:** "I need to pay $10 now to potentially win the $30 that's already in the pot."
+**Implied odds:** "I need to pay $10 now, but if I hit my hand, I can win the $30 in the pot PLUS another $100+ from my opponent on later streets."
+
+**Why this matters deep:**
+At 100 BB, your opponent only has so much money behind. Even if you hit a monster, they might not pay you off enough to justify your preflop call.
+
+At 300 BB, your opponent has a massive stack behind them. If you flop a set against their overpair, they might put in 200+ BB trying to figure out why you keep raising. That's where the big money comes from.
+
+**Example:**
+You have 5-5 in the Big Blind. Someone raises to 3 BB. You call 2 BB more.
+- You'll flop a set about 12% of the time (roughly 1 in 8 tries)
+- At 100 BB: you need to win about 16 BB when you hit to break even. Doable but tight.
+- At 300 BB: you could win 100-200+ BB when you hit. That's hugely profitable even though you miss 7 out of 8 times.
+
+**The deeper the stacks, the more "set mining" and "drawing" is worth.**`
+      },
+      {
+        title: 'Which Hands Gain the Most Value Deep?',
+        content: `Not all hands benefit equally from deep stacks. Here's what changes:
+
+**Hands that gain a LOT of value deep:**
+- **Small and medium pairs (22-88):** Set mining becomes incredibly profitable. You invest a small amount preflop and can win a huge pot when you hit.
+- **Suited connectors (54s, 67s, 89s, etc.):** These can make straights and flushes that are hard for opponents to see coming. A hidden flush or straight deep can win someone's entire stack.
+- **Suited gappers (75s, 86s, 97s, etc.):** Similar to suited connectors but slightly weaker. Still very profitable deep because of flush potential.
+- **Suited aces (A2s-A9s):** The nut flush draw is incredibly powerful deep. If you make the best possible flush, your opponent with a smaller flush might pay off their whole stack.
+
+**Hands that DON'T change much deep:**
+- **Premium pairs (AA, KK, QQ):** These are great at any depth, but they actually become slightly trickier deep. You can still get stacked by a set or two pair.
+- **Big offsuit cards (AKo, KQo):** These make top pair, which is fine but rarely wins a huge pot deep. One pair hands are uncomfortable when 300 BB go in.
+
+**The key shift in thinking:**
+At standard depth, you want the best starting hand (AA, KK).
+At deep stacks, you want the hand with the most hidden potential (suited connectors, small pairs). A hand that can make the nuts (best possible hand) is worth more than a hand that makes top pair.`
+      },
+      {
+        title: 'Preflop Strategy Changes When Deep',
+        content: `Your preflop approach needs significant adjustments when deep-stacked.
+
+**From the Big Blind (BB) — Defend much wider:**
+At 300 BB, you should call raises with almost any suited hand and all pairs. The price is tiny compared to what you can win. Hands like 43 suited, 32 suited, and all small pairs become automatic calls versus a standard raise.
+
+**From late position — Open more speculative hands:**
+The Button and Cutoff can add more suited connectors and gappers to their raising range. You have position AND deep stacks — the dream combination.
+
+**From early position — Stay tight but add set-mining hands:**
+UTG should still play tight, but you can add small pairs (22-55) that you would fold at shallow stacks. If you hit a set, your early position raise looks like AA/KK, and opponents pay you off.
+
+**3-betting (re-raising) adjustments:**
+- With premium hands: 3-bet smaller. At 300 BB, a 3-bet to 9-10 BB lets opponents call with speculative hands that you dominate.
+- With suited connectors: You can 3-bet these as bluffs. If called, you have a playable hand. If they 4-bet, you fold cheaply.
+- Avoid 3-betting mediocre hands: Hands like AJo or KTo are awkward when deep. They make top pair but can't handle the heat when stacks go in.
+
+**Raise sizing:**
+At deep stacks, consider raising slightly larger (3x instead of 2.5x BB) to charge speculative callers. But don't go crazy — you still want action with your premium hands.`
+      },
+      {
+        title: 'Post-Flop Play Deep — The Art of Building Pots',
+        content: `Post-flop is where deep-stack poker really diverges from standard play.
+
+**Pot control is essential:**
+With 300 BB behind, the pot can grow exponentially. A small bet on the flop leads to a medium bet on the turn and a huge bet on the river. You need a plan for ALL three streets, not just the current one.
+
+**Before you bet, ask yourself:**
+1. "If I bet here, how big will the pot be by the river?"
+2. "Is my hand strong enough to put in that many chips?"
+3. "Would I be comfortable if my opponent raises?"
+
+**The stack-to-pot ratio (SPR):**
+SPR = your remaining stack divided by the pot. This number tells you how committed you should be:
+- SPR below 4: You're basically committed. Top pair is usually good enough to go with.
+- SPR 4-10: Medium commitment. You want at least two pair or a strong draw.
+- SPR above 10: You need a very strong hand (set or better) to be comfortable stacking off.
+
+At 300 BB preflop, the SPR after a standard raise and call might be 30+. That means you need a very strong hand to put all the money in. This is why one-pair hands are dangerous deep.
+
+**Slow-playing becomes more viable:**
+At deep stacks, you can check-call with monsters (sets, straights, flushes) more often. Your opponent has more chips to bet on later streets, so you're not leaving money on the table by not raising immediately.
+
+**Multi-street planning:**
+Think about the WHOLE hand, not just the current bet. If you have a set on the flop, plan your bet sizes so that by the river, you can get all the chips in naturally. Don't bet too big too early (scares them off) or too small (leaves money behind).`
+      },
+      {
+        title: 'Common Deep-Stack Mistakes to Avoid',
+        content: `Even experienced players make these errors when stacks get deep:
+
+**Mistake 1: Overvaluing one-pair hands**
+At 100 BB, top pair top kicker is often good enough to go all-in. At 300 BB, if you put in your whole stack with one pair, you're almost always beaten. One pair is a "small pot" hand at deep stacks — play it cautiously.
+
+**Mistake 2: Not adjusting bet sizes**
+The same $20 bet means very different things at 100 BB vs 300 BB. At 100 BB it's a significant portion of your stack. At 300 BB it's a tiny probe. Adjust your sizing to match the effective depth.
+
+**Mistake 3: Ignoring position**
+Position is always important, but deep stacks amplify it. Playing out of position (acting first) with 300 BB behind is very difficult because every mistake compounds over multiple streets. Be extra disciplined about which hands you play from the blinds.
+
+**Mistake 4: Failing to set-mine**
+At deep stacks, NOT calling with small pairs against a raise is leaving money on the table. The implied odds are too good. As long as the raise is less than about 5% of the effective stack, calling with any pair is profitable.
+
+**Mistake 5: Getting attached to premiums**
+Just because you have Aces doesn't mean you should put in 300 BB. If the board is scary (connected, suited, paired) and your opponent is showing extreme aggression, even AA should be folded sometimes. Deep stacks require emotional detachment from your starting hand.
+
+**Mistake 6: Not taking notes on opponents**
+Deep-stack games are usually slower with fewer all-ins. This gives you time to observe. Pay attention to who plays too many hands, who folds to pressure, and who only bets big with the nuts. These reads are worth fortunes in deep play.`
+      }
+    ]
+  },
+  {
     id: 'mental',
     title: 'The Mental Game',
     level: 'All Levels',
