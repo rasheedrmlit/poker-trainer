@@ -160,7 +160,7 @@ io.on('connection', (socket) => {
 
     // Auto-start if enough players
     if (table.engine.canStartHand() && table.engine.state === GAME_STATES.WAITING) {
-      setTimeout(() => startHand(tableId), 1000);
+      setTimeout(() => startHand(tableId), 500);
     }
   });
 
@@ -203,10 +203,10 @@ io.on('connection', (socket) => {
     } else if (result.advanceStreet) {
       io.to(currentTableId).emit('street-advanced', { street: table.engine.state });
       // Process AI actions after street advance
-      setTimeout(() => processAIActions(currentTableId), 800);
+      setTimeout(() => processAIActions(currentTableId), 300);
     } else {
       // Process next AI action if applicable
-      setTimeout(() => processAIActions(currentTableId), 600);
+      setTimeout(() => processAIActions(currentTableId), 200);
     }
   });
 
@@ -359,7 +359,7 @@ function startHand(tableId) {
   io.to(tableId).emit('hand-started', { handNumber: table.engine.handNumber });
 
   // Process AI actions if AI goes first
-  setTimeout(() => processAIActions(tableId), 800);
+  setTimeout(() => processAIActions(tableId), 300);
 }
 
 function processAIActions(tableId) {
@@ -387,9 +387,9 @@ function processAIActions(tableId) {
       handleHandComplete(tableId, result);
     } else if (result.advanceStreet) {
       io.to(tableId).emit('street-advanced', { street: table.engine.state });
-      setTimeout(() => processAIActions(tableId), 800);
+      setTimeout(() => processAIActions(tableId), 300);
     } else {
-      setTimeout(() => processAIActions(tableId), 600);
+      setTimeout(() => processAIActions(tableId), 200);
     }
   }
 }
