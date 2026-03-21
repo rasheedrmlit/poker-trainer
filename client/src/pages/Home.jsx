@@ -14,8 +14,10 @@ const STACK_TYPES = [
 const BLIND_LEVELS = [
   { label: '$0.50/$1', sb: 0.5, bb: 1 },
   { label: '$1/$2', sb: 1, bb: 2 },
-  { label: '$2.50/$5', sb: 2.5, bb: 5 },
+  { label: '$1/$3', sb: 1, bb: 3 },
+  { label: '$2/$5', sb: 2, bb: 5 },
   { label: '$5/$10', sb: 5, bb: 10 },
+  { label: '$10/$20', sb: 10, bb: 20 },
   { label: '$25/$50', sb: 25, bb: 50 },
 ];
 
@@ -202,12 +204,12 @@ export default function Home({ playerName, setPlayerName }) {
       {/* Blind Level Selector */}
       <div className="w-full max-w-sm mb-3">
         <div className="text-xs text-gray-500 uppercase tracking-wide mb-2 text-center">Blinds</div>
-        <div className="grid grid-cols-5 gap-1.5">
+        <div className="flex flex-wrap gap-1.5 justify-center">
           {BLIND_LEVELS.map((b, i) => (
             <button
               key={i}
               onClick={() => setBlindLevel(i)}
-              className={`py-2 px-1 rounded-lg text-center transition-all ${
+              className={`py-2 px-2.5 rounded-lg text-center transition-all ${
                 blindLevel === i
                   ? 'bg-gold text-black font-bold ring-2 ring-gold/50'
                   : 'bg-gray-800 text-gray-300 border border-gray-700'
