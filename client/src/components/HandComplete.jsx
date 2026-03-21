@@ -1,0 +1,232 @@
+import { useState, useEffect } from 'react';
+import Card from './Card';
+import { formatChips } from '../utils/cards';
+
+const gradeColors = {
+  'A+': 'text-green-300', 'A': 'text-green-400',
+  'B+': 'text-yellow-300', 'B': 'text-yellow-400',
+  'C': 'text-orange-400', 'D': 'text-red-400', 'F': 'text-red-500'
+};
+
+const gradeEmojis = {
+  'A+': 'Excellent!', 'A': 'Great play!',
+  'B+': 'Good job!', 'B': 'Solid.',
+  'C': 'Room to improve.', 'D': 'Needs work.', 'F': 'Big mistakes found.'
+};
+
+export default function HandComplete({ data, playerId, onGetAnalysis, analysis, onNextHand }) {
+  if (!data) return null;
+
+  const [showStreets, setShowStreets] = useState(false);
+  const [showImprovements, setShowImprovements] = useState(false);
+
+  const isWinner = data.winners?.some(w => w.playerId === playerId);
+  const myWinnings = data.winners?.find(w => w.playerId === playerId)?.amount || 0;
+
+  // Auto-request analysis when hand completes
+  useEffect(() => {
+    if (!analysis) {
+      const timer = setTimeout(() => onGetAnalysis(), 300);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  return (
+    <div className="absolute inset-0 z-40 flex items-end sm:items-center justify-center pointer-events-none">
+      <div className="bg-gray-900/97 backdrop-blur-md rounded-t-2xl sm:rounded-2xl p-5 mx-0 sm:mx-4 max-w-md w-full border-t sm:border border-gray-700 animate-slide-up pointer-events-auto max-h-[85vh] overflow-y-auto pb-24 sm:pb-5">
+
+        {/* Result Banner */}
+        <div className="text-center mb-4">
+          <div className={`text-2xl font-black ${isWinner ? 'text-gold' : 'text-gray-400'}`}>
+            {isWinner ? `You Won ${formatChips(myWinnings)}!` : 'You Didn\'t Win This One'}
+          </div>
+          {!isWinner && (
+            <p className="text-gray-500 text-xs mt-1">Every hand is a chance to learn. Let's review what happened.</p>
+          )}
+        </div>
+
+        {/* Winners */}
+        {data.winners?.map((w, i) => (
+          <div key={i} className="flex items-center gap-3 mb-3 bg-gray-800/50 rounded-xl p-3">
+            <div className="flex gap-1">
+              {w.holeCards?.map((c, j) => (
+                <Card key={j} card={c} size="sm" />
+              ))}
+            </div>
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-white">{w.name}</div>
+              {w.handName && <div className="text-xs text-gray-400">{w.handName}</div>}
+            </div>
+            <div className="text-gold font-bold text-sm">+{formatChips(w.amount)}</div>
+          </div>
+        ))}
+
+        {/* Showdown cards */}
+        {data.showdown && data.players && (
+          <div className="mt-2 pt-2 border-t border-gray-700/50">
+            <div className="text-[10px] text-gray-500 uppercase tracking-wide mb-2">Other Hands</div>
+            <div className="space-y-1.5">
+              {data.players.filter(p => !p.folded && !data.winners?.some(w => w.playerId === p.id)).map((p, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <div className="flex gap-0.5">
+                    {p.holeCards?.map((c, j) => (
+                      <Card key={j} card={c} size="sm" />
+                    ))}
+                  </div>
+                  <span className="text-xs text-gray-400">{p.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ========== COACHING ANALYSIS ========== */}
+        {analysis ? (
+          <div className="mt-4 pt-4 border-t border-gray-600">
+            {/* Grade + Summary */}
+            <div className="flex items-start gap-3 mb-3">
+              <div className="text-center">
+                <div className={`text-3xl font-black ${gradeColors[analysis.overallGrade] || 'text-gray-400'}`}>
+                  {analysis.overallGrade}
+                </div>
+                <div className="text-[10px] text-gray-500">GRADE</div>
+              </div>
+              <div className="flex-1">
+                <div className="text-sm font-semibold text-gray-200 mb-1">
+                  {gradeEmojis[analysis.overallGrade] || 'Review'}
+                </div>
+                {analysis.summary && (
+                  <p className="text-xs text-gray-400 leading-relaxed">{analysis.summary}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Key Mistakes (shown prominently) */}
+            {analysis.keyMistakes?.length > 0 && (
+              <div className="bg-red-950/40 border border-red-800/40 rounded-xl p-3 mb-3">
+                <div className="text-[10px] text-red-400 uppercase tracking-wide font-bold mb-1.5">Key Mistakes</div>
+                <div className="space-y-1.5">
+                  {analysis.keyMistakes.map((m, i) => (
+                    <p key={i} className="text-xs text-red-200 leading-relaxed">{m}</p>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Street-by-Street Breakdown (expandable) */}
+            {analysis.streetBreakdown?.length > 0 && (
+              <div className="mb-3">
+                <button
+                  onClick={() => setShowStreets(!showStreets)}
+                  className="w-full flex items-center justify-between bg-gray-800/60 rounded-xl px-3 py-2.5 active:bg-gray-800"
+                >
+                  <span className="text-xs text-gray-300 font-semibold">Street-by-Street Breakdown</span>
+                  <span className="text-gray-500 text-xs">{showStreets ? '▼' : '▶'}</span>
+                </button>
+
+                {showStreets && (
+                  <div className="mt-2 space-y-3 animate-fade-in">
+                    {analysis.streetBreakdown.map((street, i) => (
+                      <div key={i} className="bg-gray-800/40 rounded-xl p-3">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-xs font-bold text-gold">{street.streetName}</span>
+                          {street.handStrengthDesc && (
+                            <span className="text-[10px] text-gray-400">{street.handStrengthDesc}</span>
+                          )}
+                        </div>
+
+                        {/* Community cards for this street */}
+                        {street.communityCards?.length > 0 && (
+                          <div className="flex gap-1 mb-2">
+                            {street.communityCards.map((c, j) => (
+                              <Card key={j} card={c} size="xs" />
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Actions taken */}
+                        <div className="space-y-1">
+                          {street.actions.map((a, j) => (
+                            <div key={j} className="text-xs text-gray-300 flex items-center gap-2">
+                              <span className="text-gray-500">You:</span>
+                              <span>{a}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Action-by-action grades */}
+            {analysis.actions?.length > 0 && (
+              <div className="mb-3">
+                <div className="text-[10px] text-gray-500 uppercase tracking-wide mb-2">Your Decisions</div>
+                <div className="space-y-1.5">
+                  {analysis.actions.map((a, i) => {
+                    const scoreColor = a.score >= 0.8 ? 'text-green-400' : a.score >= 0.5 ? 'text-yellow-400' : 'text-red-400';
+                    const scoreBg = a.score >= 0.8 ? 'bg-green-900/20' : a.score >= 0.5 ? 'bg-yellow-900/20' : 'bg-red-900/20';
+                    const scoreLabel = a.score >= 0.8 ? 'Good' : a.score >= 0.5 ? 'Okay' : 'Mistake';
+                    return (
+                      <div key={i} className={`${scoreBg} rounded-lg px-3 py-2`}>
+                        <div className="flex items-center justify-between mb-0.5">
+                          <span className="text-xs text-gray-300 font-medium">
+                            {a.streetName || ''}: {a.action}
+                          </span>
+                          <span className={`text-[10px] font-bold ${scoreColor}`}>{scoreLabel}</span>
+                        </div>
+                        {a.feedback && (
+                          <p className="text-[11px] text-gray-400 leading-relaxed">{a.feedback}</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Improvements (expandable) */}
+            {analysis.improvements?.length > 0 && (
+              <div className="mb-3">
+                <button
+                  onClick={() => setShowImprovements(!showImprovements)}
+                  className="w-full flex items-center justify-between bg-emerald-950/30 border border-emerald-800/30 rounded-xl px-3 py-2.5 active:bg-emerald-950/50"
+                >
+                  <span className="text-xs text-emerald-400 font-semibold">Tips to Improve</span>
+                  <span className="text-emerald-600 text-xs">{showImprovements ? '▼' : '▶'}</span>
+                </button>
+
+                {showImprovements && (
+                  <div className="mt-2 bg-emerald-950/20 rounded-xl p-3 animate-fade-in">
+                    <div className="space-y-2">
+                      {analysis.improvements.map((imp, i) => (
+                        <p key={i} className="text-xs text-emerald-200/80 leading-relaxed">{imp}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="mt-4 pt-4 border-t border-gray-700 text-center">
+            <div className="text-gray-500 text-sm animate-pulse-soft">Analyzing your play...</div>
+          </div>
+        )}
+
+        {/* ========== DEAL NEXT HAND BUTTON ========== */}
+        <div className="mt-4 sticky bottom-0 pt-2 bg-gray-900/95">
+          <button
+            onClick={onNextHand}
+            className="w-full bg-gradient-to-r from-gold-dark to-gold text-black font-bold py-4 rounded-xl text-lg active:scale-[0.97] transition-transform shadow-lg shadow-gold/20"
+          >
+            Deal Next Hand
+          </button>
+          <p className="text-center text-gray-600 text-[10px] mt-1">Take your time reviewing the analysis above</p>
+        </div>
+      </div>
+    </div>
+  );
+}

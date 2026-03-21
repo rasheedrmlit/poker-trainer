@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+
+  input, textarea {
+    user-select: text;
+  }
+
+  html, body {
+    overscroll-behavior: none;
+    touch-action: manipulation;
+  }
+}
+
+@layer components {
+  .card-front {
+    @apply bg-white rounded-lg shadow-lg border border-gray-200 flex flex-col items-center justify-center font-bold;
+  }
+
+  .card-back {
+    @apply rounded-lg shadow-lg border border-gray-600;
+    background: linear-gradient(135deg, #1e3a5f 25%, #2a4a6f 25%, #2a4a6f 50%, #1e3a5f 50%, #1e3a5f 75%, #2a4a6f 75%);
+    background-size: 8px 8px;
+  }
+
+  .btn-primary {
+    @apply bg-gold text-black font-bold py-3 px-6 rounded-xl active:scale-95 transition-transform;
+  }
+
+  .btn-action {
+    @apply font-bold py-4 px-6 rounded-xl active:scale-95 transition-all text-lg;
+  }
+
+  .btn-fold {
+    @apply btn-action bg-red-600 text-white;
+  }
+
+  .btn-call {
+    @apply btn-action bg-green-600 text-white;
+  }
+
+  .btn-raise {
+    @apply btn-action bg-yellow-500 text-black;
+  }
+
+  .btn-check {
+    @apply btn-action bg-blue-600 text-white;
+  }
+
+  .player-seat {
+    @apply absolute flex flex-col items-center;
+  }
+
+  .coaching-overlay {
+    @apply fixed bottom-24 left-4 right-4 bg-gray-900/95 backdrop-blur-sm rounded-xl p-4 border border-gold/30 animate-slide-up z-30;
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+}
+
+/* Range colors */
+.suit-h { color: #ef4444; }
+.suit-d { color: #3b82f6; }
+.suit-c { color: #22c55e; }
+.suit-s { color: #1f2937; }
