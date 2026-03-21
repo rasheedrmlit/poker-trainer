@@ -360,6 +360,42 @@ function startHand(tableId) {
 
   // Process AI actions if AI goes first
   setTimeout(() => processAIActions(tableId), 300);
+
+  // Watchdog: if an AI player is still current after 5s, force their action
+  scheduleAIWatchdog(tableId);
+}
+
+// Safety watchdog — if an AI player hasn't acted within 5 seconds, force them
+function scheduleAIWatchdog(tableId) {
+  setTimeout(() => {
+    const table = tables.get(tableId);
+    if (!table) return;
+
+    const currentPlayer = table.engine.getCurrentPlayer();
+    if (!currentPlayer || !currentPlayer.isAI) return;
+
+    // AI is stuck — force check or fold
+    console.warn(`AI watchdog triggered for ${currentPlayer.name} on table ${tableId}`);
+    const toCall = (table.engine.currentBet || 0) - (currentPlayer.bet || 0);
+    const fallback = toCall === 0 ? { type: 'check' } : { type: 'fold' };
+
+    try {
+      const result = table.engine.processAction(currentPlayer.id, fallback);
+      if (result && result.success) {
+        broadcastGameState(tableId);
+        io.to(tableId).emit('player-acted', result.action);
+
+        if (result.handComplete) {
+          handleHandComplete(tableId, result);
+        } else {
+          setTimeout(() => processAIActions(tableId), 200);
+          scheduleAIWatchdog(tableId);
+        }
+      }
+    } catch (e) {
+      console.error('Watchdog fallback failed:', e.message);
+    }
+  }, 5000);
 }
 
 function processAIActions(tableId) {
@@ -370,16 +406,41 @@ function processAIActions(tableId) {
   if (!currentPlayer || !currentPlayer.isAI) return;
 
   const aiEngine = table.aiEngines.get(currentPlayer.id);
-  if (!aiEngine) return;
 
+  // Build a safe fallback action (check if possible, otherwise fold)
   const gameState = table.engine.getGameState(currentPlayer.id);
-  const decision = aiEngine.decide(gameState, currentPlayer.id);
+  const toCall = gameState.currentBet - (currentPlayer.bet || 0);
+  const fallbackAction = toCall === 0 ? { type: 'check' } : { type: 'fold' };
 
-  if (!decision) return;
+  let decision;
+  try {
+    if (aiEngine) {
+      decision = aiEngine.decide(gameState, currentPlayer.id);
+    }
+  } catch (err) {
+    console.error(`AI decision error for ${currentPlayer.name}:`, err.message);
+  }
 
-  const result = table.engine.processAction(currentPlayer.id, decision);
+  // If AI returned nothing, use the fallback so the game never hangs
+  if (!decision) {
+    decision = fallbackAction;
+  }
 
-  if (result.success) {
+  let result;
+  try {
+    result = table.engine.processAction(currentPlayer.id, decision);
+  } catch (err) {
+    console.error(`AI processAction error for ${currentPlayer.name}:`, err.message);
+    // Force a fallback action
+    try {
+      result = table.engine.processAction(currentPlayer.id, fallbackAction);
+    } catch (err2) {
+      console.error(`AI fallback also failed for ${currentPlayer.name}:`, err2.message);
+      return; // give up — next human action or timeout will recover
+    }
+  }
+
+  if (result && result.success) {
     broadcastGameState(tableId);
     io.to(tableId).emit('player-acted', result.action);
 
@@ -390,6 +451,23 @@ function processAIActions(tableId) {
       setTimeout(() => processAIActions(tableId), 300);
     } else {
       setTimeout(() => processAIActions(tableId), 200);
+    }
+  } else {
+    // Action failed — force fold/check to keep game moving
+    console.warn(`AI action failed for ${currentPlayer.name}, forcing fallback`);
+    try {
+      const fallbackResult = table.engine.processAction(currentPlayer.id, fallbackAction);
+      if (fallbackResult && fallbackResult.success) {
+        broadcastGameState(tableId);
+        io.to(tableId).emit('player-acted', fallbackResult.action);
+        if (fallbackResult.handComplete) {
+          handleHandComplete(tableId, fallbackResult);
+        } else {
+          setTimeout(() => processAIActions(tableId), 200);
+        }
+      }
+    } catch (e) {
+      console.error('Fallback also failed:', e.message);
     }
   }
 }

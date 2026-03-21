@@ -276,7 +276,7 @@ class AIEngine {
 
   decidePostflopAction(player, gameState, validActions) {
     const community = gameState.communityCards || [];
-    const handStrength = getHandStrength(player.holeCards, community, 200);
+    const handStrength = getHandStrength(player.holeCards, community, 80);
     const potSize = gameState.pot;
     const toCall = gameState.currentBet - (player.bet || 0);
     const spr = potSize > 0 ? player.stack / potSize : 20;
