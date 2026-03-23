@@ -67,13 +67,13 @@ export default function PlayerSeat({ player, position, isHero, isActive, lastAct
       <div className="flex gap-0.5 mb-0.5 justify-center">
         {player.holeCards && player.holeCards.length === 2 && showCards ? (
           <>
-            <Card card={player.holeCards[0]} size={isHero ? (compact ? 'md' : 'lg') : (compact ? 'xs' : 'sm')} />
-            <Card card={player.holeCards[1]} size={isHero ? (compact ? 'md' : 'lg') : (compact ? 'xs' : 'sm')} delay={50} />
+            <Card card={player.holeCards[0]} size={isHero ? (compact ? 'xl' : 'lg') : (compact ? 'sm' : 'sm')} />
+            <Card card={player.holeCards[1]} size={isHero ? (compact ? 'xl' : 'lg') : (compact ? 'sm' : 'sm')} delay={50} />
           </>
         ) : player.folded ? null : (
           <>
-            <Card faceDown size={isHero ? (compact ? 'md' : 'lg') : 'xs'} />
-            <Card faceDown size={isHero ? (compact ? 'md' : 'lg') : 'xs'} delay={50} />
+            <Card faceDown size={isHero ? (compact ? 'xl' : 'lg') : (compact ? 'sm' : 'xs')} />
+            <Card faceDown size={isHero ? (compact ? 'xl' : 'lg') : (compact ? 'sm' : 'xs')} delay={50} />
           </>
         )}
       </div>
