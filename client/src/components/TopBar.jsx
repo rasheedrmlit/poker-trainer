@@ -63,7 +63,7 @@ export default function TopBar({ gameState, tableId, isTraining, onOpenSidebar, 
       {showMenu && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-          <div className="absolute right-2 top-full mt-1 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl z-50 w-56 overflow-hidden animate-fade-in">
+          <div className="absolute right-2 top-full mt-1 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl z-50 w-56 animate-fade-in overflow-y-auto" style={{ maxHeight: 'calc(100vh - 60px)' }}>
             <button
               onClick={() => { onOpenSidebar('stats'); setShowMenu(false); }}
               className="w-full text-left px-4 py-3 text-sm text-gray-200 hover:bg-gray-700 active:bg-gray-600 transition-colors border-b border-gray-700"

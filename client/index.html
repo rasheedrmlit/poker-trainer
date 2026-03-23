@@ -2,16 +2,31 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="theme-color" content="#0f3d1e" />
+  <link rel="manifest" href="/manifest.json" />
   <title>Poker Trainer</title>
   <style>
-    body { margin: 0; background: #0a0a0a; overflow: hidden; }
-    #root { width: 100vw; height: 100dvh; }
+    html, body {
+      margin: 0; padding: 0; overflow: hidden;
+      width: 100%; height: 100%;
+      background: #0a0a0a;
+    }
+    /* Use the actual visible area, accounting for browser chrome */
+    #root {
+      position: fixed;
+      top: env(safe-area-inset-top, 0);
+      left: env(safe-area-inset-left, 0);
+      right: env(safe-area-inset-right, 0);
+      bottom: env(safe-area-inset-bottom, 0);
+      width: auto;
+      height: auto;
+    }
 
-    /* Portrait blocker — only on mobile-sized screens */
+    /* Portrait blocker */
     #rotate-overlay {
       display: none;
       position: fixed; inset: 0; z-index: 99999;
@@ -28,11 +43,11 @@
       0%, 100% { transform: rotate(0deg); }
       30%, 70% { transform: rotate(90deg); }
     }
-    /* Show overlay when portrait AND narrow screen (mobile) */
     @media (orientation: portrait) and (max-width: 900px) {
       #rotate-overlay { display: flex !important; }
       #root { display: none !important; }
     }
+
   </style>
 </head>
 <body>
@@ -43,7 +58,37 @@
       Poker Trainer is designed for landscape mode.<br>Please turn your phone sideways to play.
     </p>
   </div>
+
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
+  <script>
+    (function() {
+      // Detect if running as PWA (already fullscreen)
+      var isPWA = window.navigator.standalone || window.matchMedia('(display-mode: fullscreen)').matches || window.matchMedia('(display-mode: standalone)').matches;
+
+      if (!isPWA) {
+        // Try fullscreen API on first interaction (works on Android Chrome)
+        ['click','touchstart'].forEach(function(evt) {
+          document.addEventListener(evt, function f() {
+            var el = document.documentElement;
+            var rfs = el.requestFullscreen || el.webkitRequestFullscreen;
+            if (rfs && window.innerHeight < 500) {
+              rfs.call(el).catch(function(){});
+            }
+            document.removeEventListener(evt, f);
+          }, { once: true, passive: true });
+        });
+
+      }
+
+      // Scroll URL bar away as fallback
+      window.addEventListener('load', function() {
+        setTimeout(function() { window.scrollTo(0, 1); }, 200);
+      });
+      window.addEventListener('orientationchange', function() {
+        setTimeout(function() { window.scrollTo(0, 1); }, 400);
+      });
+    })();
+  </script>
 </body>
 </html>

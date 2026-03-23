@@ -1,5 +1,15 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { formatChips } from '../utils/cards';
+
+function useIsMobile() {
+  const [m, setM] = useState(false);
+  useEffect(() => {
+    const c = () => setM(window.innerHeight < 500 && window.innerWidth > window.innerHeight);
+    c(); window.addEventListener('resize', c);
+    return () => window.removeEventListener('resize', c);
+  }, []);
+  return m;
+}
 
 export default function ActionBar({
   gameState, playerId, isMyTurn, myPlayer,
@@ -7,6 +17,7 @@ export default function ActionBar({
 }) {
   const [raiseAmount, setRaiseAmount] = useState(0);
   const [showRaiseSlider, setShowRaiseSlider] = useState(false);
+  const isMobile = useIsMobile();
 
   const validActions = useMemo(() => {
     if (!isMyTurn || !myPlayer || !gameState) return [];
@@ -66,7 +77,6 @@ export default function ActionBar({
     }
   };
 
-  // Initialize raise amount when it becomes our turn
   useMemo(() => {
     if (raiseAction) {
       setRaiseAmount(raiseAction.min);
@@ -75,9 +85,11 @@ export default function ActionBar({
 
   if (!isMyTurn || gameState?.state === 'hand_complete' || gameState?.state === 'waiting') {
     return (
-      <div className="safe-bottom bg-gray-900/90 border-t border-gray-800 px-4 py-3">
+      <div className="safe-bottom border-t border-gray-800/50 px-4 py-3" style={{
+        background: 'linear-gradient(180deg, rgba(15,15,25,0.95) 0%, rgba(10,10,18,0.98) 100%)',
+      }}>
         <div className="flex items-center justify-between">
-          <div className="text-gray-500 text-sm">
+          <div className="text-gray-500 text-sm font-medium">
             {gameState?.state === 'waiting'
               ? 'Waiting for players...'
               : gameState?.state === 'hand_complete'
@@ -86,8 +98,10 @@ export default function ActionBar({
           </div>
           <button
             onClick={onToggleCoaching}
-            className={`text-xs px-3 py-1.5 rounded-lg transition-colors ${
-              showCoaching ? 'bg-gold/20 text-gold' : 'bg-gray-800 text-gray-500'
+            className={`text-xs px-3 py-1.5 rounded-lg transition-all font-bold ${
+              showCoaching
+                ? 'bg-gold/20 text-gold border border-gold/30'
+                : 'bg-gray-800/80 text-gray-500 border border-gray-700/50'
             }`}
           >
             Coach {showCoaching ? 'ON' : 'OFF'}
@@ -98,41 +112,90 @@ export default function ActionBar({
   }
 
   return (
-    <div className="safe-bottom bg-gray-900/95 border-t border-gray-800 z-30">
-      {/* Raise slider */}
+    <div className="safe-bottom z-30 border-t border-gray-800/50" style={{
+      background: 'linear-gradient(180deg, rgba(15,15,25,0.95) 0%, rgba(10,10,18,0.98) 100%)',
+    }}>
+      {/* Raise slider panel */}
       {showRaiseSlider && raiseAction && (
-        <div className="px-4 pt-3 pb-2 border-b border-gray-800 animate-slide-up">
-          <div className="flex items-center gap-3 mb-2">
-            <span className="text-gray-400 text-xs w-12">Raise</span>
-            <input
-              type="range"
-              min={raiseAction.min}
-              max={raiseAction.max}
-              step={gameState.config?.bigBlind || 2}
-              value={raiseAmount}
-              onChange={(e) => setRaiseAmount(parseInt(e.target.value))}
-              className="flex-1 h-2 accent-gold"
-            />
-            <span className="text-gold font-bold text-sm w-16 text-right">{formatChips(raiseAmount)}</span>
+        <div className="px-4 pt-3 pb-2 border-b border-gray-800/50 animate-slide-up">
+          <div className="flex items-center gap-3 mb-2.5">
+            <span className="text-gray-400 text-xs font-medium w-10">Raise</span>
+            <div className="flex-1 relative">
+              <input
+                type="range"
+                min={raiseAction.min}
+                max={raiseAction.max}
+                step={gameState.config?.bigBlind || 2}
+                value={raiseAmount}
+                onChange={(e) => setRaiseAmount(parseInt(e.target.value))}
+                className="w-full h-2 appearance-none rounded-full bg-gray-700 outline-none"
+                style={{
+                  background: `linear-gradient(90deg, #d4af37 0%, #d4af37 ${((raiseAmount - raiseAction.min) / (raiseAction.max - raiseAction.min)) * 100}%, #374151 ${((raiseAmount - raiseAction.min) / (raiseAction.max - raiseAction.min)) * 100}%, #374151 100%)`
+                }}
+              />
+            </div>
+            {/* Editable amount input */}
+            <div className="relative w-20">
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gold/60 text-sm font-bold pointer-events-none">$</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={raiseAction.min}
+                max={raiseAction.max}
+                value={raiseAmount}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
+                  if (!isNaN(val)) {
+                    setRaiseAmount(Math.max(raiseAction.min, Math.min(val, raiseAction.max)));
+                  }
+                }}
+                onBlur={() => {
+                  setRaiseAmount(Math.max(raiseAction.min, Math.min(raiseAmount, raiseAction.max)));
+                }}
+                className="w-full bg-gray-800 border border-gold/30 rounded-lg text-gold font-black text-sm text-right pr-2 pl-5 py-1.5 outline-none focus:border-gold/60 focus:ring-1 focus:ring-gold/30 appearance-none"
+                style={{ MozAppearance: 'textfield' }}
+              />
+            </div>
           </div>
-          <div className="flex gap-2">
-            <button onClick={() => handlePresetRaise('min')} className="flex-1 bg-gray-800 text-gray-300 text-xs py-1.5 rounded-lg active:bg-gray-700">Min</button>
-            <button onClick={() => handlePresetRaise(0.33)} className="flex-1 bg-gray-800 text-gray-300 text-xs py-1.5 rounded-lg active:bg-gray-700">1/3</button>
-            <button onClick={() => handlePresetRaise(0.5)} className="flex-1 bg-gray-800 text-gray-300 text-xs py-1.5 rounded-lg active:bg-gray-700">1/2</button>
-            <button onClick={() => handlePresetRaise(0.75)} className="flex-1 bg-gray-800 text-gray-300 text-xs py-1.5 rounded-lg active:bg-gray-700">3/4</button>
-            <button onClick={() => handlePresetRaise('pot')} className="flex-1 bg-gray-800 text-gray-300 text-xs py-1.5 rounded-lg active:bg-gray-700">Pot</button>
-            <button onClick={() => handlePresetRaise('allin')} className="flex-1 bg-red-900 text-red-300 text-xs py-1.5 rounded-lg active:bg-red-800">All-in</button>
+          <div className="flex gap-1.5">
+            {[
+              { label: 'Min', val: 'min' },
+              { label: '1/3', val: 0.33 },
+              { label: '1/2', val: 0.5 },
+              { label: '3/4', val: 0.75 },
+              { label: 'Pot', val: 'pot' },
+              { label: 'All-in', val: 'allin', red: true },
+            ].map(p => (
+              <button
+                key={p.label}
+                onClick={() => handlePresetRaise(p.val)}
+                className={`flex-1 text-[10px] font-bold py-1.5 rounded-lg active:scale-95 transition-all ${
+                  p.red
+                    ? 'bg-red-900/60 text-red-300 border border-red-700/30'
+                    : 'bg-gray-800/80 text-gray-300 border border-gray-700/30'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
           </div>
         </div>
       )}
 
       {/* Main action buttons */}
-      <div className="flex gap-2 px-3 py-3">
-        {/* Coaching button */}
+      <div className="flex gap-2 px-3 py-2" style={isMobile ? { gap: 4, padding: '4px 8px' } : {}}>
+        {/* Coaching hint button */}
         <button
           onClick={onGetSuggestion}
-          className="w-10 h-14 flex items-center justify-center bg-gray-800 rounded-xl text-gold text-lg active:scale-95 transition-transform"
-          title="Get GTO suggestion"
+          className="flex items-center justify-center rounded-xl text-gold font-bold active:scale-95 transition-transform"
+          style={{
+            width: isMobile ? 28 : 44,
+            fontSize: isMobile ? 12 : 18,
+            background: 'linear-gradient(135deg, rgba(212,175,55,0.15), rgba(212,175,55,0.05))',
+            border: '1px solid rgba(212,175,55,0.25)',
+            borderRadius: isMobile ? 8 : 12,
+          }}
+          title="Get coaching hint"
         >
           ?
         </button>
@@ -141,7 +204,16 @@ export default function ActionBar({
         {canFold && (
           <button
             onClick={() => onAction({ type: 'fold' })}
-            className="btn-fold flex-1 min-w-0"
+            className="flex-1 min-w-0 font-black active:scale-95 transition-all"
+            style={{
+              padding: isMobile ? '6px 4px' : '14px 8px',
+              fontSize: isMobile ? 11 : 16,
+              borderRadius: isMobile ? 8 : 12,
+              background: 'linear-gradient(180deg, #dc2626 0%, #b91c1c 100%)',
+              boxShadow: '0 4px 12px rgba(220,38,38,0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
+              color: '#fff',
+              textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+            }}
           >
             Fold
           </button>
@@ -151,7 +223,16 @@ export default function ActionBar({
         {canCheck && (
           <button
             onClick={() => onAction({ type: 'check' })}
-            className="btn-check flex-1 min-w-0"
+            className="flex-1 min-w-0 font-black active:scale-95 transition-all"
+            style={{
+              padding: isMobile ? '6px 4px' : '14px 8px',
+              fontSize: isMobile ? 11 : 16,
+              borderRadius: isMobile ? 8 : 12,
+              background: 'linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%)',
+              boxShadow: '0 4px 12px rgba(37,99,235,0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
+              color: '#fff',
+              textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+            }}
           >
             Check
           </button>
@@ -161,21 +242,39 @@ export default function ActionBar({
         {callAction && (
           <button
             onClick={() => onAction({ type: 'call', amount: callAction.amount })}
-            className="btn-call flex-1 min-w-0"
+            className="flex-1 min-w-0 font-black active:scale-95 transition-all flex flex-col items-center"
+            style={{
+              padding: isMobile ? '4px 4px' : '10px 8px',
+              fontSize: isMobile ? 11 : 16,
+              borderRadius: isMobile ? 8 : 12,
+              background: 'linear-gradient(180deg, #16a34a 0%, #15803d 100%)',
+              boxShadow: '0 4px 12px rgba(22,163,74,0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
+              color: '#fff',
+              textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+            }}
           >
-            <div>Call</div>
-            <div className="text-xs opacity-80">{formatChips(callAction.amount)}</div>
+            <span>Call</span>
+            <span style={{ fontSize: isMobile ? 8 : 10, opacity: 0.8, fontWeight: 700 }}>{formatChips(callAction.amount)}</span>
           </button>
         )}
 
-        {/* All-in (when can't raise normally) */}
+        {/* All-in (when can't raise) */}
         {allinAction && !raiseAction && (
           <button
             onClick={() => onAction({ type: 'allin', amount: allinAction.amount })}
-            className="flex-1 min-w-0 btn-action bg-red-700 text-white"
+            className="flex-1 min-w-0 font-black active:scale-95 transition-all flex flex-col items-center"
+            style={{
+              padding: isMobile ? '4px 4px' : '10px 8px',
+              fontSize: isMobile ? 11 : 16,
+              borderRadius: isMobile ? 8 : 12,
+              background: 'linear-gradient(180deg, #dc2626 0%, #991b1b 100%)',
+              boxShadow: '0 4px 12px rgba(220,38,38,0.4), inset 0 1px 0 rgba(255,255,255,0.15)',
+              color: '#fff',
+              textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+            }}
           >
-            <div>All In</div>
-            <div className="text-xs opacity-80">{formatChips(allinAction.amount)}</div>
+            <span>All In</span>
+            <span style={{ fontSize: isMobile ? 8 : 10, opacity: 0.8, fontWeight: 700 }}>{formatChips(allinAction.amount)}</span>
           </button>
         )}
 
@@ -185,15 +284,33 @@ export default function ActionBar({
             {showRaiseSlider ? (
               <button
                 onClick={handleRaise}
-                className="btn-raise flex-1 min-w-0"
+                className="flex-1 min-w-0 font-black active:scale-95 transition-all flex flex-col items-center"
+                style={{
+                  padding: isMobile ? '4px 4px' : '10px 8px',
+                  fontSize: isMobile ? 11 : 16,
+                  borderRadius: isMobile ? 8 : 12,
+                  background: 'linear-gradient(180deg, #eab308 0%, #ca8a04 100%)',
+                  boxShadow: '0 4px 12px rgba(234,179,8,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
+                  color: '#1a1a2e',
+                  textShadow: '0 1px 0 rgba(255,255,255,0.2)',
+                }}
               >
-                <div>Raise</div>
-                <div className="text-xs opacity-80">{formatChips(raiseAmount)}</div>
+                <span>Raise</span>
+                <span style={{ fontSize: isMobile ? 8 : 10, opacity: 0.7, fontWeight: 700 }}>{formatChips(raiseAmount)}</span>
               </button>
             ) : (
               <button
                 onClick={() => setShowRaiseSlider(true)}
-                className="btn-raise flex-1 min-w-0"
+                className="flex-1 min-w-0 font-black active:scale-95 transition-all"
+                style={{
+                  padding: isMobile ? '6px 4px' : '14px 8px',
+                  fontSize: isMobile ? 11 : 16,
+                  borderRadius: isMobile ? 8 : 12,
+                  background: 'linear-gradient(180deg, #eab308 0%, #ca8a04 100%)',
+                  boxShadow: '0 4px 12px rgba(234,179,8,0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
+                  color: '#1a1a2e',
+                  textShadow: '0 1px 0 rgba(255,255,255,0.2)',
+                }}
               >
                 Raise
               </button>

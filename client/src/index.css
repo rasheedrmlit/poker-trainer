@@ -63,8 +63,53 @@
   }
 
   .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom, 16px);
+    padding-bottom: env(safe-area-inset-bottom, 8px);
   }
+}
+
+/* ===== MOBILE-ONLY STYLES (landscape phones) ===== */
+/* Only applies to screens shorter than 500px in landscape */
+@media (max-height: 500px) and (orientation: landscape) {
+  /* Table shape: rectangle with small rounded corners, edge-to-edge */
+  .mobile-table-inset {
+    left: 2% !important;
+    right: 2% !important;
+    top: 1% !important;
+    bottom: 1% !important;
+  }
+}
+
+/* Desktop fallback for mobile-table-inset */
+@media (min-height: 501px) {
+  .mobile-table-inset {
+    left: 5%;
+    right: 5%;
+    top: 2%;
+    bottom: 2%;
+  }
+}
+
+/* Range slider thumb styling */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fde68a, #d4af37);
+  cursor: pointer;
+  border: 2px solid rgba(0,0,0,0.2);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fde68a, #d4af37);
+  cursor: pointer;
+  border: 2px solid rgba(0,0,0,0.2);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
 }
 
 /* Custom scrollbar */
@@ -81,7 +126,7 @@
   border-radius: 2px;
 }
 
-/* Range colors */
+/* Suit colors */
 .suit-h { color: #ef4444; }
 .suit-d { color: #3b82f6; }
 .suit-c { color: #22c55e; }

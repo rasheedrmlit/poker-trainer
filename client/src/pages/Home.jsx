@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import QRCode from '../components/QRCode';
 
@@ -120,6 +120,19 @@ export default function Home({ playerName, setPlayerName }) {
     if (tableId) navigate(`/table/${tableId}`);
   };
 
+  // Detect if running as PWA
+  const [isPWA, setIsPWA] = useState(false);
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
+  const [showInstallTip, setShowInstallTip] = useState(false);
+
+  useEffect(() => {
+    const pwa = window.navigator.standalone || window.matchMedia('(display-mode: fullscreen)').matches || window.matchMedia('(display-mode: standalone)').matches;
+    const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    setIsPWA(pwa);
+    setIsMobileDevice(mobile);
+    setShowInstallTip(mobile && !pwa);
+  }, []);
+
   const MOBILE_URL = 'https://poker-trainer-m544.onrender.com';
 
   const copyMobileLink = () => {
@@ -158,13 +171,37 @@ export default function Home({ playerName, setPlayerName }) {
   return (
     <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-gradient-to-b from-gray-950 via-felt-dark to-gray-950 overflow-y-auto">
       {/* Logo */}
-      <div className="mb-6 text-center">
+      <div className="mb-4 text-center">
         <div className="text-5xl font-black tracking-tight mb-2">
           <span className="text-white">POKER</span>
           <span className="text-gold"> TRAINER</span>
         </div>
         <p className="text-gray-400 text-sm">Master No-Limit Hold'em with real-time coaching</p>
       </div>
+
+      {/* Add to Home Screen prompt — mobile only, not in PWA */}
+      {showInstallTip && (
+        <div className="w-full max-w-sm mb-4 rounded-xl overflow-hidden border border-gold/30"
+          style={{ background: 'linear-gradient(135deg, rgba(212,175,55,0.1), rgba(212,175,55,0.02))' }}>
+          <div className="px-4 py-3 flex items-start gap-3">
+            <div className="text-2xl mt-0.5">📲</div>
+            <div className="flex-1">
+              <div className="text-gold font-bold text-sm mb-1">Install for Full-Screen Play</div>
+              <div className="text-gray-300 text-xs leading-relaxed">
+                {/iPhone|iPad/i.test(navigator.userAgent) ? (
+                  <>Tap <span className="text-white font-bold">Share</span> (the box with arrow) → <span className="text-white font-bold">Add to Home Screen</span> to play without the browser bar.</>
+                ) : (
+                  <>Tap the <span className="text-white font-bold">⋮ menu</span> → <span className="text-white font-bold">Install app</span> or <span className="text-white font-bold">Add to Home Screen</span> for full-screen play.</>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={() => setShowInstallTip(false)}
+              className="text-gray-500 text-lg leading-none mt-0.5 active:text-white"
+            >×</button>
+          </div>
+        </div>
+      )}
 
       {/* Name Input */}
       <div className="w-full max-w-sm mb-4">

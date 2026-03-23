@@ -1,13 +1,7 @@
 import { useState } from 'react';
 import { getPreflopStrength, getDeepStackStrength } from '../utils/preflopStrength';
 
-/**
- * A small badge shown near the hero's cards during a hand (training mode).
- * Shows the preflop win percentage against a random opponent.
- * Uses deep-stack strength when effectiveBB >= 150.
- * Tap to expand/collapse the description.
- */
-export default function PreflopBadge({ cards, effectiveBB = 100 }) {
+export default function PreflopBadge({ cards, effectiveBB = 100, compact = false }) {
   const [expanded, setExpanded] = useState(false);
 
   if (!cards || cards.length < 2) return null;
@@ -20,67 +14,70 @@ export default function PreflopBadge({ cards, effectiveBB = 100 }) {
 
   const { key, winEquity, tierLabel, tierColor, description, deepBonus } = data;
 
+  // Mobile: to the right of hero cards; Desktop: centered below
+  const posStyle = compact
+    ? { position: 'absolute', right: '8%', bottom: '18%', zIndex: 30 }
+    : { position: 'absolute', left: '50%', bottom: '30%', transform: 'translateX(-50%)', zIndex: 30 };
+
   return (
-    <div
-      className="absolute left-1/2 bottom-[30%] -translate-x-1/2 z-30 animate-fade-in"
-      onClick={() => setExpanded(!expanded)}
-    >
-      {/* Compact badge */}
+    <div style={posStyle} className="animate-fade-in" onClick={() => setExpanded(!expanded)}>
       <div
-        className="flex items-center gap-1.5 rounded-full px-3 py-1 cursor-pointer select-none shadow-lg border border-white/10"
-        style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}
+        className="flex items-center gap-1 rounded-full cursor-pointer select-none shadow-lg"
+        style={{
+          backgroundColor: 'rgba(0,0,0,0.8)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          padding: compact ? '2px 8px' : '4px 12px',
+        }}
       >
-        {/* Colored dot */}
-        <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: tierColor }} />
+        <div className="rounded-full shrink-0" style={{ width: compact ? 8 : 10, height: compact ? 8 : 10, backgroundColor: tierColor }} />
 
-        {/* Hand label */}
-        <span className="text-white/80 text-[11px] font-mono font-bold">{key}</span>
-
-        {/* Separator */}
-        <span className="text-white/20 text-[10px]">|</span>
-
-        {/* Win percentage */}
-        <span className="text-[13px] font-black" style={{ color: tierColor }}>
-          {winEquity.toFixed(1)}% win
+        <span style={{ color: tierColor, fontSize: compact ? 10 : 13, fontWeight: 900 }}>
+          {winEquity.toFixed(1)}%
         </span>
 
-        {/* Tier */}
-        <span
-          className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-          style={{ backgroundColor: tierColor + '25', color: tierColor }}
-        >
-          {tierLabel}
-        </span>
-
-        {/* Deep indicator */}
-        {isDeep && <span className="text-red-400 text-[9px] font-bold">DEEP</span>}
-
-        {/* Expand chevron */}
-        <span className="text-white/40 text-[10px]">{expanded ? '▼' : '▶'}</span>
+        {!compact && (
+          <>
+            <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, fontFamily: 'monospace', fontWeight: 700 }}>{key}</span>
+            <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 10 }}>|</span>
+            <span style={{ backgroundColor: tierColor + '25', color: tierColor, fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 9999 }}>
+              {tierLabel}
+            </span>
+            {isDeep && <span style={{ color: '#f87171', fontSize: 9, fontWeight: 700 }}>DEEP</span>}
+            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10 }}>{expanded ? '▼' : '▶'}</span>
+          </>
+        )}
       </div>
 
-      {/* Expanded description */}
       {expanded && (
         <div
-          className="mt-1.5 rounded-xl px-3.5 py-2.5 text-[12px] leading-relaxed max-w-[300px] animate-slide-up shadow-xl border border-white/10"
-          style={{ backgroundColor: 'rgba(0,0,0,0.85)' }}
+          className="animate-slide-up"
+          style={{
+            marginTop: 6,
+            borderRadius: 12,
+            padding: '10px 14px',
+            fontSize: 12,
+            lineHeight: 1.5,
+            maxWidth: compact ? 220 : 300,
+            backgroundColor: 'rgba(0,0,0,0.9)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+          }}
         >
-          <p className="text-gray-200">{description}</p>
-          <p className="text-gray-400 text-[11px] mt-1.5">
-            Against one random opponent, this hand wins about <strong className="text-white">{winEquity.toFixed(1)}%</strong> of the time when both players go all-in before the flop.
-            {winEquity >= 70 && ' That\'s a monster — you\'re a huge favorite!'}
-            {winEquity >= 60 && winEquity < 70 && ' You\'re a solid favorite heads-up.'}
-            {winEquity >= 50 && winEquity < 60 && ' Slightly better than a coin flip — position and post-flop play matter a lot.'}
-            {winEquity < 50 && ' You\'re an underdog — be selective about when you play this.'}
+          <p style={{ color: '#fff', fontWeight: 700, fontSize: 11, marginBottom: 4 }}>{key} — {tierLabel}</p>
+          <p style={{ color: '#e5e7eb', fontSize: 11 }}>{description}</p>
+          <p style={{ color: '#9ca3af', fontSize: 10, marginTop: 4 }}>
+            Wins ~<strong style={{ color: '#fff' }}>{winEquity.toFixed(1)}%</strong> heads-up all-in.
+            {winEquity >= 70 && ' Monster hand!'}
+            {winEquity >= 60 && winEquity < 70 && ' Strong favorite.'}
+            {winEquity >= 50 && winEquity < 60 && ' Slight edge — play matters.'}
+            {winEquity < 50 && ' Underdog — be selective.'}
           </p>
           {isDeep && deepBonus > 0 && (
-            <p className="text-red-300 text-[10px] mt-1.5">
-              Deep-stack bonus: This hand is more playable at {effectiveBB} BB because the implied odds (potential future winnings) are much larger.
+            <p style={{ color: '#fca5a5', fontSize: 9, marginTop: 4 }}>
+              Deep-stack bonus: more playable at {effectiveBB} BB.
             </p>
           )}
-          <p className="text-gray-600 text-[9px] mt-1">
-            With more opponents at the table, your win % goes down. Tap to close.
-          </p>
+          <p style={{ color: '#4b5563', fontSize: 8, marginTop: 4 }}>Tap to close</p>
         </div>
       )}
     </div>
