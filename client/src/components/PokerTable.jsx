@@ -171,15 +171,14 @@ export default function PokerTable({ gameState, playerId, lastAction, isTraining
         ))}
       </div>
 
-      {/* Hero bankroll — left of cards on mobile */}
+      {/* Hero bankroll — left of hero cards on mobile, same row */}
       {isMobile && hero && (
         <div style={{
-          position: 'absolute', left: '25%', bottom: '78%', zIndex: 30,
+          position: 'absolute', left: '30%', bottom: '6%', transform: 'translateX(-50%)', zIndex: 30,
           background: 'rgba(0,0,0,0.7)', borderRadius: 8, padding: '3px 8px',
           border: '1px solid rgba(212,175,55,0.25)',
         }}>
-          <div style={{ color: '#d4af37', fontSize: 10, fontWeight: 900 }}>{formatChips(hero.stack)}</div>
-          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 7, fontWeight: 600, textAlign: 'center' }}>STACK</div>
+          <div style={{ color: '#d4af37', fontSize: 11, fontWeight: 900, textAlign: 'center' }}>{formatChips(hero.stack)}</div>
         </div>
       )}
 
