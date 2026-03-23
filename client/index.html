@@ -10,9 +10,39 @@
   <style>
     body { margin: 0; background: #0a0a0a; overflow: hidden; }
     #root { width: 100vw; height: 100dvh; }
+
+    /* Portrait blocker — only on mobile-sized screens */
+    #rotate-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 99999;
+      background: #0a0a0a;
+      flex-direction: column; align-items: center; justify-content: center;
+      gap: 20px; color: #fff; font-family: system-ui, sans-serif; text-align: center;
+      padding: 2rem;
+    }
+    #rotate-overlay .phone-icon {
+      width: 60px; height: 100px; border: 3px solid #d4a017; border-radius: 12px;
+      position: relative; animation: rotatePhone 2s ease-in-out infinite;
+    }
+    @keyframes rotatePhone {
+      0%, 100% { transform: rotate(0deg); }
+      30%, 70% { transform: rotate(90deg); }
+    }
+    /* Show overlay when portrait AND narrow screen (mobile) */
+    @media (orientation: portrait) and (max-width: 900px) {
+      #rotate-overlay { display: flex !important; }
+      #root { display: none !important; }
+    }
   </style>
 </head>
 <body>
+  <div id="rotate-overlay">
+    <div class="phone-icon"></div>
+    <h2 style="margin:0;font-size:1.4rem;color:#d4a017;">Rotate Your Phone</h2>
+    <p style="margin:0;opacity:0.7;font-size:0.95rem;max-width:280px;">
+      Poker Trainer is designed for landscape mode.<br>Please turn your phone sideways to play.
+    </p>
+  </div>
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
 </body>

@@ -22,7 +22,7 @@ export default function PreflopBadge({ cards, effectiveBB = 100 }) {
 
   return (
     <div
-      className="absolute left-1/2 bottom-[42%] -translate-x-1/2 z-30 animate-fade-in"
+      className="absolute left-1/2 bottom-[30%] -translate-x-1/2 z-30 animate-fade-in"
       onClick={() => setExpanded(!expanded)}
     >
       {/* Compact badge */}
