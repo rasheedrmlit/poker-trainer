@@ -170,6 +170,18 @@ export default function PokerTable({ gameState, playerId, lastAction, isTraining
         ))}
       </div>
 
+      {/* Hero bankroll — left of cards on mobile */}
+      {isMobile && hero && (
+        <div style={{
+          position: 'absolute', left: '25%', bottom: '78%', zIndex: 30,
+          background: 'rgba(0,0,0,0.7)', borderRadius: 8, padding: '3px 8px',
+          border: '1px solid rgba(212,175,55,0.25)',
+        }}>
+          <div style={{ color: '#d4af37', fontSize: 10, fontWeight: 900 }}>{formatChips(hero.stack)}</div>
+          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 7, fontWeight: 600, textAlign: 'center' }}>STACK</div>
+        </div>
+      )}
+
       {/* Preflop badge */}
       {isTraining && (() => {
         if (hero?.holeCards?.length === 2 && gameState.state !== 'waiting' && gameState.state !== 'hand_complete') {

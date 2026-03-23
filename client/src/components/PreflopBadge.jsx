@@ -14,9 +14,9 @@ export default function PreflopBadge({ cards, effectiveBB = 100, compact = false
 
   const { key, winEquity, tierLabel, tierColor, description, deepBonus } = data;
 
-  // Mobile: to the right of hero cards; Desktop: centered below
+  // Mobile: just right of center (next to hero cards); Desktop: centered below
   const posStyle = compact
-    ? { position: 'absolute', right: '8%', bottom: '18%', zIndex: 30 }
+    ? { position: 'absolute', left: '62%', bottom: '78%', zIndex: 30 }
     : { position: 'absolute', left: '50%', bottom: '30%', transform: 'translateX(-50%)', zIndex: 30 };
 
   return (
