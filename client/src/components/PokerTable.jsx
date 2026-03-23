@@ -49,7 +49,7 @@ export default function PokerTable({ gameState, playerId, lastAction, isTraining
   const hero = players.find(p => p.id === playerId);
   const bb = gameState.config?.bigBlind || 2;
   const effectiveBB = hero ? Math.round((hero.stack + (hero.bet || 0)) / bb) : 100;
-  const cardSize = isMobile ? 'lg' : 'md';
+  const cardSize = 'md';
 
   return (
     <div className="w-full h-full relative overflow-hidden">
@@ -165,8 +165,8 @@ export default function PokerTable({ gameState, playerId, lastAction, isTraining
         ))}
         {Array.from({ length: Math.max(0, 5 - community.length) }).map((_, i) => (
           <div key={`ph-${i}`}
-            className={isMobile ? 'rounded' : 'rounded-lg'}
-            style={isMobile ? { width: 60, height: 86 } : { width: 48, height: 68 }}
+            className="rounded-lg"
+            style={{ width: 48, height: 68 }}
             style={{ border: '1px solid rgba(255,255,255,0.03)', background: 'rgba(0,0,0,0.08)' }} />
         ))}
       </div>
