@@ -2,7 +2,7 @@ import Card from './Card';
 import { formatChips } from '../utils/cards';
 import BankrollGraph from './BankrollGraph';
 import { ACHIEVEMENT_DEFS, getAchievements, getUnlockedCount } from '../utils/achievements';
-import { isMuted, toggleMute } from '../utils/sounds';
+import { isMuted, toggleMute, getSfxVolume, setSfxVolume, getMusicVolume, setMusicVolume, isMusicPlaying, toggleMusic } from '../utils/sounds';
 import { isVibrationEnabled, toggleVibration } from '../utils/vibration';
 import { getStoredTheme, toggleTheme } from '../utils/theme';
 import { useState } from 'react';
@@ -251,6 +251,9 @@ function SettingsTab() {
   const [muted, setMuted] = useState(isMuted());
   const [vibOn, setVibOn] = useState(isVibrationEnabled());
   const [theme, setThemeState] = useState(getStoredTheme());
+  const [sfxVol, setSfxVol] = useState(getSfxVolume());
+  const [musVol, setMusVol] = useState(getMusicVolume());
+  const [musicOn, setMusicOn] = useState(isMusicPlaying());
 
   return (
     <div className="space-y-3">
@@ -260,6 +263,45 @@ function SettingsTab() {
         value={!muted}
         onChange={() => { toggleMute(); setMuted(isMuted()); }}
       />
+
+      {/* SFX Volume */}
+      {!muted && (
+        <div className="bg-gray-800 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-bold text-white">SFX Volume</div>
+            <span className="text-xs text-gray-400">{Math.round(sfxVol * 100)}%</span>
+          </div>
+          <input type="range" min="0" max="1" step="0.05" value={sfxVol}
+            onChange={e => { const v = parseFloat(e.target.value); setSfxVol(v); setSfxVolume(v); }}
+            className="w-full h-2 appearance-none rounded-full bg-gray-700 outline-none"
+            style={{ background: `linear-gradient(90deg, #d4af37 0%, #d4af37 ${sfxVol * 100}%, #374151 ${sfxVol * 100}%, #374151 100%)` }}
+          />
+        </div>
+      )}
+
+      {/* Background Music */}
+      <SettingToggle
+        label="Background Music"
+        desc="Lofi jazz ambience while you play"
+        value={musicOn}
+        onChange={() => { toggleMusic(); setMusicOn(isMusicPlaying()); }}
+      />
+
+      {/* Music Volume */}
+      {musicOn && (
+        <div className="bg-gray-800 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-bold text-white">Music Volume</div>
+            <span className="text-xs text-gray-400">{Math.round(musVol * 100)}%</span>
+          </div>
+          <input type="range" min="0" max="1" step="0.05" value={musVol}
+            onChange={e => { const v = parseFloat(e.target.value); setMusVol(v); setMusicVolume(v); }}
+            className="w-full h-2 appearance-none rounded-full bg-gray-700 outline-none"
+            style={{ background: `linear-gradient(90deg, #d4af37 0%, #d4af37 ${musVol * 100}%, #374151 ${musVol * 100}%, #374151 100%)` }}
+          />
+        </div>
+      )}
+
       <SettingToggle
         label="Vibration"
         desc="Haptic feedback on your turn and wins"
