@@ -166,8 +166,7 @@ export default function PokerTable({ gameState, playerId, lastAction, isTraining
         {Array.from({ length: Math.max(0, 5 - community.length) }).map((_, i) => (
           <div key={`ph-${i}`}
             className="rounded-lg"
-            style={{ width: 48, height: 68 }}
-            style={{ border: '1px solid rgba(255,255,255,0.03)', background: 'rgba(0,0,0,0.08)' }} />
+            style={{ width: 48, height: 68, border: '1px solid rgba(255,255,255,0.03)', background: 'rgba(0,0,0,0.08)' }} />
         ))}
       </div>
 

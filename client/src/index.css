@@ -38,21 +38,10 @@
     @apply font-bold py-4 px-6 rounded-xl active:scale-95 transition-all text-lg;
   }
 
-  .btn-fold {
-    @apply btn-action bg-red-600 text-white;
-  }
-
-  .btn-call {
-    @apply btn-action bg-green-600 text-white;
-  }
-
-  .btn-raise {
-    @apply btn-action bg-yellow-500 text-black;
-  }
-
-  .btn-check {
-    @apply btn-action bg-blue-600 text-white;
-  }
+  .btn-fold { @apply btn-action bg-red-600 text-white; }
+  .btn-call { @apply btn-action bg-green-600 text-white; }
+  .btn-raise { @apply btn-action bg-yellow-500 text-black; }
+  .btn-check { @apply btn-action bg-blue-600 text-white; }
 
   .player-seat {
     @apply absolute flex flex-col items-center;
@@ -67,10 +56,48 @@
   }
 }
 
+/* ===== ANIMATIONS ===== */
+
+/* Card deal — swoops in from dealer position */
+@keyframes dealFromDealer {
+  0% {
+    transform: translate(0, -80px) rotate(-15deg) scale(0.5);
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Chip slide to pot */
+@keyframes chipToPot {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-40px) scale(0.7);
+    opacity: 0;
+  }
+}
+
+/* Pot slide to winner */
+@keyframes potToWinner {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.animate-pot-win {
+  animation: potToWinner 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 /* ===== MOBILE-ONLY STYLES (landscape phones) ===== */
-/* Only applies to screens shorter than 500px in landscape */
 @media (max-height: 500px) and (orientation: landscape) {
-  /* Table shape: rectangle with small rounded corners, edge-to-edge */
   .mobile-table-inset {
     left: 2% !important;
     right: 2% !important;
@@ -79,7 +106,6 @@
   }
 }
 
-/* Desktop fallback for mobile-table-inset */
 @media (min-height: 501px) {
   .mobile-table-inset {
     left: 5%;
@@ -113,14 +139,8 @@ input[type="range"]::-moz-range-thumb {
 }
 
 /* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 4px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 2px;
@@ -131,3 +151,21 @@ input[type="range"]::-moz-range-thumb {
 .suit-d { color: #3b82f6; }
 .suit-c { color: #22c55e; }
 .suit-s { color: #1f2937; }
+
+/* ===== LIGHT THEME ===== */
+.theme-light {
+  --bg-primary: #f5f5f5;
+  --bg-secondary: #e8e8e8;
+  --text-primary: #1a1a1a;
+  --text-secondary: #555;
+}
+
+.theme-light .bg-gray-950 { background-color: #f0f0f0 !important; }
+.theme-light .bg-gray-900 { background-color: #e0e0e0 !important; }
+.theme-light .bg-gray-800 { background-color: #d0d0d0 !important; }
+.theme-light .text-white { color: #1a1a1a !important; }
+.theme-light .text-gray-300 { color: #444 !important; }
+.theme-light .text-gray-400 { color: #666 !important; }
+.theme-light .text-gray-500 { color: #777 !important; }
+.theme-light .border-gray-800 { border-color: #ccc !important; }
+.theme-light .border-gray-700 { border-color: #bbb !important; }

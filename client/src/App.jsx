@@ -6,6 +6,7 @@ import Guide from './pages/Guide';
 import HandChart from './pages/HandChart';
 import { useSocket } from './hooks/useSocket';
 import { applyFeltTheme, getStoredFelt } from './utils/feltThemes';
+import { applyTheme, getStoredTheme } from './utils/theme';
 
 export default function App() {
   const socket = useSocket();
@@ -13,9 +14,10 @@ export default function App() {
     localStorage.getItem('poker_name') || ''
   );
 
-  // Apply stored felt theme on mount
+  // Apply stored felt theme and color theme on mount
   useEffect(() => {
     applyFeltTheme(getStoredFelt());
+    applyTheme(getStoredTheme());
   }, []);
 
   return (

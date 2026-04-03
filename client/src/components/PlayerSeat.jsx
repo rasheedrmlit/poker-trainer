@@ -1,5 +1,6 @@
 import Card from './Card';
 import { formatChips } from '../utils/cards';
+import OpponentHUD from './OpponentHUD';
 
 // Avatar colors per AI type
 const AVATAR_COLORS = {
@@ -15,8 +16,22 @@ const AVATAR_COLORS = {
   lag_shark: '#c084fc',
 };
 
+// Approximate HUD stats per AI type
+const AI_HUD_STATS = {
+  gto_bot: { vpip: 24, pfr: 18, agg: 2.5 },
+  aggro_pro: { vpip: 30, pfr: 24, agg: 3.8 },
+  nit_reg: { vpip: 14, pfr: 10, agg: 1.8 },
+  loose_rec: { vpip: 48, pfr: 12, agg: 1.2 },
+  elite_hybrid: { vpip: 26, pfr: 20, agg: 3.0 },
+  maniac: { vpip: 55, pfr: 35, agg: 4.5 },
+  rock: { vpip: 10, pfr: 8, agg: 1.5 },
+  trappy: { vpip: 28, pfr: 16, agg: 2.0 },
+  calling_station: { vpip: 52, pfr: 8, agg: 0.8 },
+  lag_shark: { vpip: 32, pfr: 26, agg: 3.5 },
+};
+
 function getAvatarColor(player) {
-  if (!player.isAI) return '#d4af37'; // gold for human
+  if (!player.isAI) return '#d4af37';
   return AVATAR_COLORS[player.aiType] || '#94a3b8';
 }
 
@@ -24,10 +39,11 @@ function getInitials(name) {
   return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 }
 
-export default function PlayerSeat({ player, position, isHero, isActive, lastAction, showCards, compact = false }) {
+export default function PlayerSeat({ player, position, isHero, isActive, lastAction, showCards, compact = false, showHUD = true }) {
   const [left, top] = position;
   const avatarColor = getAvatarColor(player);
   const dealerBadge = player.isDealer ? 'D' : player.isSB ? 'SB' : player.isBB ? 'BB' : null;
+  const hudStats = !isHero && player.isAI ? AI_HUD_STATS[player.aiType] : null;
 
   return (
     <div
@@ -56,7 +72,6 @@ export default function PlayerSeat({ player, position, isHero, isActive, lastAct
               {lastAction.type === 'raise' && `RAISE ${formatChips(lastAction.amount)}`}
               {lastAction.type === 'allin' && 'ALL IN'}
             </div>
-            {/* Arrow */}
             <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rotate-45"
               style={{ background: lastAction.type === 'allin' ? '#dc2626' : lastAction.type === 'fold' ? '#374151' : '#1a1a2e' }} />
           </div>
@@ -139,6 +154,11 @@ export default function PlayerSeat({ player, position, isHero, isActive, lastAct
             </div>
           )}
         </div>
+
+        {/* HUD stats for AI opponents */}
+        {showHUD && hudStats && !player.folded && (
+          <OpponentHUD stats={hudStats} compact={compact} />
+        )}
 
         {/* Bet chip display */}
         {player.bet > 0 && !player.allIn && (

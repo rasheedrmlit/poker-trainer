@@ -1,26 +1,31 @@
 import Card from './Card';
 import { formatChips } from '../utils/cards';
+import BankrollGraph from './BankrollGraph';
+import { ACHIEVEMENT_DEFS, getAchievements, getUnlockedCount } from '../utils/achievements';
+import { isMuted, toggleMute } from '../utils/sounds';
+import { isVibrationEnabled, toggleVibration } from '../utils/vibration';
+import { getStoredTheme, toggleTheme } from '../utils/theme';
+import { useState } from 'react';
 
 const TABS = [
   { key: 'stats', label: 'Stats' },
   { key: 'leaks', label: 'Leaks' },
-  { key: 'history', label: 'History' }
+  { key: 'history', label: 'History' },
+  { key: 'achievements', label: 'Awards' },
+  { key: 'settings', label: 'Settings' },
 ];
 
 export default function Sidebar({
   tab, onClose, onChangeTab,
   sessionSummary, leakReport, handHistory,
   playerId, onGetAnalysis, handAnalysis,
-  onRefreshStats, onRefreshLeaks, onRefreshHistory
+  onRefreshStats, onRefreshLeaks, onRefreshHistory,
+  bankrollHistory,
 }) {
   return (
     <div className="fixed inset-0 z-50 flex">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-
-      {/* Panel */}
       <div className="relative ml-auto w-full max-w-sm bg-gray-900 h-full overflow-y-auto animate-slide-up">
-        {/* Header */}
         <div className="sticky top-0 bg-gray-900 z-10 border-b border-gray-800">
           <div className="flex items-center justify-between px-4 py-3">
             <h2 className="text-lg font-bold text-white">Dashboard</h2>
@@ -30,9 +35,7 @@ export default function Sidebar({
               </svg>
             </button>
           </div>
-
-          {/* Tabs */}
-          <div className="flex border-b border-gray-800">
+          <div className="flex border-b border-gray-800 overflow-x-auto">
             {TABS.map(t => (
               <button
                 key={t.key}
@@ -42,10 +45,8 @@ export default function Sidebar({
                   if (t.key === 'leaks') onRefreshLeaks();
                   if (t.key === 'history') onRefreshHistory();
                 }}
-                className={`flex-1 py-2.5 text-sm font-semibold transition-colors ${
-                  tab === t.key
-                    ? 'text-gold border-b-2 border-gold'
-                    : 'text-gray-500'
+                className={`flex-1 py-2.5 text-xs font-semibold whitespace-nowrap px-2 transition-colors ${
+                  tab === t.key ? 'text-gold border-b-2 border-gold' : 'text-gray-500'
                 }`}
               >
                 {t.label}
@@ -54,24 +55,28 @@ export default function Sidebar({
           </div>
         </div>
 
-        {/* Content */}
         <div className="p-4">
-          {tab === 'stats' && <StatsTab data={sessionSummary} />}
+          {tab === 'stats' && <StatsTab data={sessionSummary} bankrollHistory={bankrollHistory} />}
           {tab === 'leaks' && <LeaksTab data={leakReport} />}
           {tab === 'history' && <HistoryTab data={handHistory} playerId={playerId} onAnalyze={onGetAnalysis} analysis={handAnalysis} />}
+          {tab === 'achievements' && <AchievementsTab />}
+          {tab === 'settings' && <SettingsTab />}
         </div>
       </div>
     </div>
   );
 }
 
-function StatsTab({ data }) {
+function StatsTab({ data, bankrollHistory }) {
   if (!data || !data.hasData) {
     return <div className="text-gray-500 text-center py-8">Play some hands to see your stats!</div>;
   }
 
   return (
     <div className="space-y-4">
+      {/* Bankroll Graph */}
+      <BankrollGraph history={bankrollHistory} />
+
       <div className="grid grid-cols-2 gap-3">
         <StatCard label="Hands Played" value={data.handsPlayed} />
         <StatCard label="Hands Won" value={data.handsWon} />
@@ -79,7 +84,6 @@ function StatsTab({ data }) {
         <StatCard label="Avg Grade" value={data.avgGrade} highlight />
       </div>
 
-      {/* Encouragement */}
       {data.encouragement && (
         <div className="bg-gold/10 border border-gold/20 rounded-xl p-4">
           <p className="text-sm text-gray-300">{data.encouragement}</p>
@@ -131,22 +135,18 @@ function LeaksTab({ data }) {
 
   return (
     <div className="space-y-4">
-      {/* Summary */}
       {data.summary && (
         <div className="bg-orange-950/30 border border-orange-500/30 rounded-xl p-4">
           <p className="text-sm text-gray-300 leading-relaxed">{data.summary}</p>
         </div>
       )}
-
       <div className="bg-gray-800 rounded-xl p-4">
         <div className="text-sm text-gray-400 mb-1">Total Mistakes Tracked</div>
         <div className="text-2xl font-bold text-white">{data.totalMistakes}</div>
         <div className="text-xs text-gray-500 mt-1">
           Most mistakes happen: <span className="text-orange-400">{data.worstStreetName || data.worstStreet}</span>
-          {data.worstStreetCount && <span className="text-gray-600"> ({data.worstStreetCount} times)</span>}
         </div>
       </div>
-
       {data.leaks?.map((leak, i) => (
         <div key={i} className="bg-gray-800 rounded-xl p-4 border-l-4 border-orange-500">
           <div className="flex items-center justify-between mb-2">
@@ -191,23 +191,17 @@ function HistoryTab({ data, playerId, onAnalyze, analysis }) {
                 {isWinner ? `+${formatChips(winner.amount)}` : 'Lost'}
               </span>
             </div>
-
             <div className="flex items-center gap-2">
-              {/* Hole cards */}
               <div className="flex gap-0.5">
                 {playerData?.holeCards?.map((c, j) => (
                   <Card key={j} card={c} size="sm" />
                 ))}
               </div>
-
-              {/* Community */}
               <div className="flex gap-0.5 ml-2">
                 {hand.communityCards?.map((c, j) => (
                   <Card key={j} card={c} size="sm" />
                 ))}
               </div>
-
-              {/* Position */}
               <span className="ml-auto text-[10px] text-gray-500 bg-gray-700 px-1.5 py-0.5 rounded">
                 {playerData?.position}
               </span>
@@ -215,6 +209,86 @@ function HistoryTab({ data, playerId, onAnalyze, analysis }) {
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function AchievementsTab() {
+  const unlocked = getAchievements();
+  const count = getUnlockedCount();
+
+  return (
+    <div className="space-y-3">
+      <div className="text-center mb-4">
+        <div className="text-2xl font-black text-gold">{count}</div>
+        <div className="text-xs text-gray-500">of {ACHIEVEMENT_DEFS.length} unlocked</div>
+        {/* Progress bar */}
+        <div className="w-full bg-gray-800 rounded-full h-2 mt-2">
+          <div className="bg-gold rounded-full h-2 transition-all" style={{ width: `${(count / ACHIEVEMENT_DEFS.length) * 100}%` }} />
+        </div>
+      </div>
+
+      {ACHIEVEMENT_DEFS.map(a => {
+        const isUnlocked = !!unlocked[a.id];
+        return (
+          <div key={a.id} className={`flex items-center gap-3 p-3 rounded-xl ${isUnlocked ? 'bg-gray-800' : 'bg-gray-800/40 opacity-50'}`}>
+            <div className="text-2xl">{isUnlocked ? a.icon : '🔒'}</div>
+            <div className="flex-1">
+              <div className={`text-sm font-bold ${isUnlocked ? 'text-white' : 'text-gray-500'}`}>{a.name}</div>
+              <div className="text-xs text-gray-400">{a.desc}</div>
+            </div>
+            {isUnlocked && (
+              <div className="text-[10px] text-green-400 font-bold">DONE</div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function SettingsTab() {
+  const [muted, setMuted] = useState(isMuted());
+  const [vibOn, setVibOn] = useState(isVibrationEnabled());
+  const [theme, setThemeState] = useState(getStoredTheme());
+
+  return (
+    <div className="space-y-3">
+      <SettingToggle
+        label="Sound Effects"
+        desc="Card deals, chip clicks, win/lose sounds"
+        value={!muted}
+        onChange={() => { toggleMute(); setMuted(isMuted()); }}
+      />
+      <SettingToggle
+        label="Vibration"
+        desc="Haptic feedback on your turn and wins"
+        value={vibOn}
+        onChange={() => { toggleVibration(); setVibOn(isVibrationEnabled()); }}
+      />
+      <SettingToggle
+        label="Dark Mode"
+        desc="Toggle between dark and light theme"
+        value={theme === 'dark'}
+        onChange={() => { const t = toggleTheme(); setThemeState(t); }}
+      />
+    </div>
+  );
+}
+
+function SettingToggle({ label, desc, value, onChange }) {
+  return (
+    <div className="flex items-center justify-between bg-gray-800 rounded-xl p-4">
+      <div>
+        <div className="text-sm font-bold text-white">{label}</div>
+        <div className="text-xs text-gray-500">{desc}</div>
+      </div>
+      <button
+        onClick={onChange}
+        className={`w-12 h-6 rounded-full transition-colors relative ${value ? 'bg-gold' : 'bg-gray-600'}`}
+      >
+        <div className={`w-5 h-5 rounded-full bg-white shadow absolute top-0.5 transition-transform ${value ? 'translate-x-6' : 'translate-x-0.5'}`} />
+      </button>
     </div>
   );
 }
