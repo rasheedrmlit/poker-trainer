@@ -29,6 +29,12 @@ app.use(express.json());
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '..', 'client', 'dist')));
+
+  // Serve Tactical Combat game at /tactical-combat
+  app.use('/tactical-combat', express.static(path.join(__dirname, '..', 'tactical-combat', 'dist')));
+  app.get('/tactical-combat/*', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'tactical-combat', 'dist', 'index.html'));
+  });
 }
 
 // Game tables
@@ -497,9 +503,10 @@ function handleHandComplete(tableId, result) {
   setTimeout(() => broadcastGameState(tableId), 200);
 }
 
-// Serve client in production
+// Serve client in production (exclude tactical-combat and API routes)
 if (process.env.NODE_ENV === 'production') {
   app.get('*', (req, res) => {
+    if (req.path.startsWith('/tactical-combat')) return;
     res.sendFile(path.join(__dirname, '..', 'client', 'dist', 'index.html'));
   });
 }

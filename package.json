@@ -9,7 +9,7 @@
     "build": "cd client && npm install && npx vite build",
     "start": "NODE_ENV=production node server/index.js",
     "install:all": "npm install && cd server && npm install && cd ../client && npm install",
-    "postinstall": "cd server && npm install && cd ../client && npm install && npx vite build"
+    "postinstall": "cd server && npm install && cd ../client && npm install && npx vite build && cd ../tactical-combat && npm install && npx vite build"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
