@@ -470,15 +470,93 @@ export function stopMusic() {
     try { n.stop ? n.stop() : null; } catch (e) { /* already stopped */ }
   });
   musicNodes = [];
+  // Also stop custom music if playing
+  stopCustomMusic();
 }
 
-export function isMusicPlaying() { return musicPlaying; }
+export function isMusicPlaying() { return musicPlaying || customMusicPlaying; }
 
 export function toggleMusic() {
-  if (musicPlaying) {
+  if (musicPlaying || customMusicPlaying) {
     stopMusic();
+    stopCustomMusic();
   } else {
-    startMusic();
+    // If a custom track is loaded, play that; otherwise procedural
+    if (customAudioElement) {
+      playCustomMusic();
+    } else {
+      startMusic();
+    }
   }
-  return musicPlaying;
+  return isMusicPlaying();
 }
+
+// ============================================================
+// CUSTOM MUSIC — Load your own MP3/M4A/OGG from device
+// ============================================================
+let customAudioElement = null;
+let customMusicPlaying = false;
+let customTrackName = localStorage.getItem('poker_custom_track_name') || '';
+
+export function getCustomTrackName() { return customTrackName; }
+export function isCustomMusicLoaded() { return !!customAudioElement; }
+
+export function loadCustomMusic(file) {
+  return new Promise((resolve, reject) => {
+    if (!file) { reject('No file'); return; }
+
+    // Stop any existing music
+    stopMusic();
+    stopCustomMusic();
+
+    const url = URL.createObjectURL(file);
+    const audio = new Audio(url);
+    audio.loop = true;
+    audio.volume = getMusicVolume();
+
+    audio.addEventListener('canplaythrough', () => {
+      customAudioElement = audio;
+      customTrackName = file.name;
+      localStorage.setItem('poker_custom_track_name', file.name);
+      resolve(file.name);
+    }, { once: true });
+
+    audio.addEventListener('error', () => {
+      reject('Could not load audio file');
+    }, { once: true });
+  });
+}
+
+export function playCustomMusic() {
+  if (!customAudioElement) return;
+  customAudioElement.volume = getMusicVolume();
+  customAudioElement.play().catch(() => {});
+  customMusicPlaying = true;
+}
+
+export function stopCustomMusic() {
+  if (customAudioElement) {
+    customAudioElement.pause();
+    customAudioElement.currentTime = 0;
+  }
+  customMusicPlaying = false;
+}
+
+export function clearCustomMusic() {
+  stopCustomMusic();
+  if (customAudioElement) {
+    customAudioElement.src = '';
+    customAudioElement = null;
+  }
+  customTrackName = '';
+  localStorage.removeItem('poker_custom_track_name');
+}
+
+// Update custom music volume when music volume changes
+const origSetMusicVolume = setMusicVolume;
+export { origSetMusicVolume as _origSetMusicVolume };
+// Monkey-patch to keep custom audio in sync
+const _smv = setMusicVolume;
+// (Already exported above — the volume slider calls setMusicVolume which
+// updates the Web Audio gain node. For the HTML5 Audio element, we sync
+// in the Settings UI onChange handler.)

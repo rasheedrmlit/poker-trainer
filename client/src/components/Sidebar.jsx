@@ -2,10 +2,10 @@ import Card from './Card';
 import { formatChips } from '../utils/cards';
 import BankrollGraph from './BankrollGraph';
 import { ACHIEVEMENT_DEFS, getAchievements, getUnlockedCount } from '../utils/achievements';
-import { isMuted, toggleMute, getSfxVolume, setSfxVolume, getMusicVolume, setMusicVolume, isMusicPlaying, toggleMusic } from '../utils/sounds';
+import { isMuted, toggleMute, getSfxVolume, setSfxVolume, getMusicVolume, setMusicVolume, isMusicPlaying, toggleMusic, loadCustomMusic, isCustomMusicLoaded, getCustomTrackName, clearCustomMusic, playCustomMusic } from '../utils/sounds';
 import { isVibrationEnabled, toggleVibration } from '../utils/vibration';
 import { getStoredTheme, toggleTheme } from '../utils/theme';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 const TABS = [
   { key: 'stats', label: 'Stats' },
@@ -254,6 +254,26 @@ function SettingsTab() {
   const [sfxVol, setSfxVol] = useState(getSfxVolume());
   const [musVol, setMusVol] = useState(getMusicVolume());
   const [musicOn, setMusicOn] = useState(isMusicPlaying());
+  const [customTrack, setCustomTrack] = useState(getCustomTrackName());
+  const [loadingTrack, setLoadingTrack] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLoadingTrack(true);
+    try {
+      const name = await loadCustomMusic(file);
+      setCustomTrack(name);
+      playCustomMusic();
+      setMusicOn(true);
+    } catch (err) {
+      console.error('Failed to load music:', err);
+    }
+    setLoadingTrack(false);
+    // Reset input so same file can be re-selected
+    e.target.value = '';
+  };
 
   return (
     <div className="space-y-3">
@@ -282,7 +302,7 @@ function SettingsTab() {
       {/* Background Music */}
       <SettingToggle
         label="Background Music"
-        desc="Lofi jazz ambience while you play"
+        desc={customTrack ? `Playing: ${customTrack}` : 'Lofi jazz ambience while you play'}
         value={musicOn}
         onChange={() => { toggleMusic(); setMusicOn(isMusicPlaying()); }}
       />
@@ -301,6 +321,49 @@ function SettingsTab() {
           />
         </div>
       )}
+
+      {/* Load Your Own Music */}
+      <div className="bg-gray-800 rounded-xl p-4">
+        <div className="text-sm font-bold text-white mb-1">Load Your Own Music</div>
+        <div className="text-xs text-gray-500 mb-3">Pick an MP3, M4A, or OGG file from your device</div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="audio/mpeg,audio/mp4,audio/ogg,audio/wav,.mp3,.m4a,.ogg,.wav"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+
+        <div className="flex gap-2">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={loadingTrack}
+            className="flex-1 bg-gold text-black font-bold py-2.5 rounded-xl text-sm active:scale-[0.97] transition-transform disabled:opacity-50"
+          >
+            {loadingTrack ? 'Loading...' : 'Choose File'}
+          </button>
+          {customTrack && (
+            <button
+              onClick={() => { clearCustomMusic(); setCustomTrack(''); setMusicOn(false); }}
+              className="bg-gray-700 text-gray-300 font-bold py-2.5 px-4 rounded-xl text-sm active:scale-[0.97] transition-transform"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
+        {customTrack && (
+          <div className="mt-2 flex items-center gap-2 bg-gray-900/50 rounded-lg p-2">
+            <span className="text-lg">🎵</span>
+            <span className="text-xs text-gray-300 truncate flex-1">{customTrack}</span>
+          </div>
+        )}
+
+        <div className="mt-3 text-[10px] text-gray-600 leading-relaxed">
+          Free tracks: <a href="https://pixabay.com/music/search/lofi%20jazz/" target="_blank" rel="noopener" className="text-gold/60 underline">Pixabay</a> &bull; <a href="https://freemusicarchive.org/music/holiznacc0/lo-fi-and-chill" target="_blank" rel="noopener" className="text-gold/60 underline">Free Music Archive</a> &bull; <a href="https://www.chosic.com/free-music/lofi/" target="_blank" rel="noopener" className="text-gold/60 underline">Chosic</a>
+        </div>
+      </div>
 
       <SettingToggle
         label="Vibration"
